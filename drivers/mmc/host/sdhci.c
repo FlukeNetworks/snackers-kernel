@@ -2059,8 +2059,11 @@ static void sdhci_timeout_timer(unsigned long data)
 	spin_lock_irqsave(&host->lock, flags);
 
 	if (host->mrq) {
+                /* WarrenC - disable annoying and useless message for older nitrogen boards */
+                /*
 		printk(KERN_ERR "%s: Timeout waiting for hardware "
-			"interrupt.\n", mmc_hostname(host->mmc));
+			"interrupt.\n ", mmc_hostname(host->mmc));
+                */
 		sdhci_dumpregs(host);
 
 		if (host->data) {
