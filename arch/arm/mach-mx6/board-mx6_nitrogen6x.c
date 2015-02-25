@@ -81,6 +81,25 @@
 #include "crm_regs.h"
 #include "cpu_op-mx6.h"
 
+#define SNACKERS_BOARD
+#ifdef SNACKERS_BOARD
+/*************************************************************/
+/* LKD GPIO definitions */
+#define GP_BT_POWER           IMX_GPIO_NR(7, 5)
+#define GP_ECSPI2_CS_EEPROM   IMX_GPIO_NR(2, 26)
+#define GP_ECSPI4_CS_SPINOR   IMX_GPIO_NR(3, 24)
+#define GP_ECSPI5_CS_DISPLAY  IMX_GPIO_NR(1, 19)
+#define GP_ENET_PHY_INT	      IMX_GPIO_NR(1, 28)
+#define GP_KILL_POWER         IMX_GPIO_NR(5, 22)
+#define GP_PHY_RESET          IMX_GPIO_NR(1, 25)
+#define GP_BACKLIGHT_ENABLE   IMX_GPIO_NR(1, 11)
+#define GP_SPI_FLASH_CS       IMX_GPIO_NR(3, 24)
+#define GP_SYS_RESET_B        IMX_GPIO_NR(3, 19)
+#define GP_USB_OTG_PWR        IMX_GPIO_NR(4, 15)
+#define GP_USB_HUB_RESET      IMX_GPIO_NR(5, 28)
+/*************************************************************/
+#else
+
 #define GP_SD3_CD		IMX_GPIO_NR(7, 0)
 #define GP_SD3_WP		IMX_GPIO_NR(7, 1)
 #define GP_SD4_CD		IMX_GPIO_NR(2, 6)
@@ -113,6 +132,8 @@
 #define N6_WL1271_WL_IRQ		IMX_GPIO_NR(6, 14)
 #define N6_WL1271_WL_EN			IMX_GPIO_NR(6, 15)
 #define N6_WL1271_BT_EN			IMX_GPIO_NR(6, 16)
+#endif /* SNACKERS_BOARD */
+/*************************************************************/
 
 #define CAN1_ERR_TEST_PADCFG	(PAD_CTL_PKE | PAD_CTL_PUE | \
 		PAD_CTL_PUS_100K_DOWN | PAD_CTL_SPEED_MED | \
@@ -130,6 +151,21 @@
 #define N6_IRQ_TEST_PADCFG	(PAD_CTL_PKE | N6_IRQ_PADCFG)
 #define N6_EN_PADCFG		(PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm)
 
+#ifdef SNACKERS_BOARD
+/*************************************************************/
+#undef CSI0_CAMERA
+#undef CSI1_CAMERA
+#undef MIPI_CAMERA
+#undef TC358743_MIPI_CAMERA
+#undef CONFIG_WL12XX_PLATFORM_DATA
+#undef CONFIG_MXC_VIDEO_GS2971
+#undef CONFIG_MXC_VIDEO_GS2971_MODULE
+#undef CONFIG_KEYBOARD_GPIO
+#undef CONFIG_KEYBOARD_GPIO_MODULE
+#undef CONFIG_SND_SOC_SGTL5000
+/*************************************************************/
+#else
+
 #if defined(CONFIG_MXC_CAMERA_OV5642) || defined(CONFIG_MXC_CAMERA_OV5642_MODULE)
 #define CSI0_CAMERA
 #endif
@@ -145,6 +181,8 @@
 #if defined(CONFIG_MXC_HDMI_CSI2_TC358743) || defined(CONFIG_MXC_HDMI_CSI2_TC358743_MODULE)
 #define TC358743_MIPI_CAMERA
 #endif
+#endif /* SNACKERS_BOARD */
+/*************************************************************/
 
 #if !defined(MIPI_CAMERA)
 #define OV5640_MIPI_IPU -1
@@ -171,7 +209,9 @@ static struct clk *sata_clk;
 extern char *gp_reg_id;
 extern char *soc_reg_id;
 extern char *pu_reg_id;
+#ifndef SNACKERS_BOARD
 static int caam_enabled;
+#endif
 
 extern struct regulator *(*get_cpu_regulator)(void);
 extern void (*put_cpu_regulator)(void);
@@ -194,6 +234,7 @@ static int mxc_iomux_v3_setup_pads(iomux_v3_cfg_t *mx6q_pad_list,
         return 0;
 }
 
+#ifndef SNACKERS_BOARD
 static struct gpio n6w_wl1271_gpios[] __initdata = {
 	{.label = "wl1271_int",		.gpio = N6_WL1271_WL_IRQ,	.flags = GPIOF_DIR_IN},
 	{.label = "wl1271_bt_en",	.gpio = N6_WL1271_BT_EN,	.flags = 0},
@@ -219,6 +260,7 @@ __init static int is_nitrogen6w(void)
 	}
 	return ret;
 }
+#endif /* SNACKERS_BOARD */
 
 enum sd_pad_mode {
 	SD_PAD_MODE_LOW_SPEED,
@@ -256,13 +298,24 @@ static int plt_sd_pad_change(unsigned int index, int clock)
 	return IOMUX_SETUP(sd_pads[i]);
 }
 
+#ifndef SNACKERS_BOARD
 static void sdio_set_power(int on)
 {
 	pr_debug("%s:%s: set power(%d)\n",
 		 __FILE__, __func__, on);
 	gpio_set_value(N6_WL1271_WL_EN,on);
 }
+#endif
 
+#ifdef SNACKERS_BOARD
+static const struct esdhc_platform_data sd4_data __initconst = {
+	.cd_gpio = -1,
+	.wp_gpio = -1,
+	.keep_power_at_suspend = 1,
+	.platform_pad_change = plt_sd_pad_change,
+};
+
+#else
 #ifdef CONFIG_WL12XX_PLATFORM_DATA
 static struct esdhc_platform_data sd2_data = {
 	.always_present = 1,
@@ -288,6 +341,7 @@ static const struct esdhc_platform_data sd4_data __initconst = {
 	.keep_power_at_suspend = 1,
 	.platform_pad_change = plt_sd_pad_change,
 };
+#endif /* SNACKERS_BOARD */
 
 static const struct anatop_thermal_platform_data
 	anatop_thermal_data __initconst = {
@@ -369,6 +423,29 @@ static struct fec_platform_data fec_data __initdata = {
 	.phy_irq = gpio_to_irq(GP_ENET_PHY_INT)
 };
 
+#ifdef SNACKERS_BOARD
+/************************************************************************/
+/* Using spi4 for the SPI NOR Flash boot device */
+static int spi_cs[] = {
+	GP_ECSPI4_CS_SPINOR,
+};
+
+static const struct spi_imx_master spi_data __initconst = {
+	.chipselect     = spi_cs,
+	.num_chipselect = ARRAY_SIZE(spi_cs),
+};
+
+/* spi2:  EEPROM and Temp Sensor */
+static int ecspi2_cs[] = {
+	GP_ECSPI2_CS_EEPROM,
+};
+
+static const struct spi_imx_master ecspi2_data __initconst = {
+	.chipselect     = ecspi2_cs,
+	.num_chipselect = ARRAY_SIZE(ecspi2_cs),
+};
+/************************************************************************/
+#else
 static int spi_cs[] = {
 	GP_ECSPI1_CS1,
 };
@@ -388,6 +465,8 @@ static const struct spi_imx_master ecspi2_data __initconst = {
 	.num_chipselect = ARRAY_SIZE(ecspi2_cs),
 };
 #endif
+#endif /* SNACKERS_BOARD  */
+/************************************************************************/
 
 #if defined(CONFIG_MXC_VIDEO_GS2971) || defined(CONFIG_MXC_VIDEO_GS2971_MODULE)
 static int spi3_cs[] = {
@@ -409,7 +488,11 @@ static struct mtd_partition spi_nor_partitions[] = {
 	{
 	 .name = "ubparams",
 	 .offset = MTDPART_OFS_APPEND,
+#ifdef SNACKERS_BOARD
+	 .size = 64*1024,
+#else
 	 .size = 8*1024,
+#endif
 	},
 	{
 	 .name = "unused",
@@ -418,13 +501,35 @@ static struct mtd_partition spi_nor_partitions[] = {
 	},
 };
 
+#ifdef SNACKERS_BOARD
+/*****************************************************/
+static struct flash_platform_data spi_flash_data = {
+	.name = "m25p80",
+	.parts = spi_nor_partitions,
+	.nr_parts = ARRAY_SIZE(spi_nor_partitions),
+	.type = "m25p16",
+};
+#endif
+
+static struct spi_board_info spi_nor_device[] __initdata = {
+#if defined(CONFIG_MTD_M25P80)
+	{
+		.modalias = "m25p80",
+		.max_speed_hz = 20000000, /* max spi clock (SCK) speed in HZ */
+		.bus_num = 3,
+		.chip_select = 0,
+		.platform_data = &spi_flash_data,
+	},
+#endif
+};
+/*****************************************************/
+#else
 static struct flash_platform_data spi_flash_data = {
 	.name = "m25p80",
 	.parts = spi_nor_partitions,
 	.nr_parts = ARRAY_SIZE(spi_nor_partitions),
 	.type = "sst25vf016b",
 };
-#endif
 
 static struct spi_board_info spi_nor_device[] __initdata = {
 #if defined(CONFIG_MTD_M25P80)
@@ -437,6 +542,8 @@ static struct spi_board_info spi_nor_device[] __initdata = {
 	},
 #endif
 };
+#endif /* SNACKERS_BOARD  */
+/*****************************************************/
 
 #if defined(CONFIG_MXC_VIDEO_GS2971) || defined(CONFIG_MXC_VIDEO_GS2971_MODULE)
 static struct fsl_mxc_camera_platform_data gs2971_data;
@@ -461,6 +568,8 @@ static void spi_device_init(void)
 #endif
 }
 
+#ifndef SNACKERS_BOARD
+/****************************************************************/
 static struct mxc_audio_platform_data audio_data;
 
 static int sgtl5000_init(void)
@@ -507,11 +616,15 @@ static struct mxc_audio_platform_data audio_data = {
 static struct platform_device audio_device = {
 	.name = "imx-sgtl5000",
 };
+#endif /* #ifndef SNACKERS_BOARD */
+/****************************************************************/
 
 static struct imxi2c_platform_data i2c_data = {
 	.bitrate = 100000,
 };
 
+#if 0
+#ifndef SNACKERS_BOARD
 static struct i2c_board_info mxc_i2c0_board_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("sgtl5000", 0x0a),
@@ -521,7 +634,11 @@ static struct i2c_board_info mxc_i2c0_board_info[] __initdata = {
 		.irq = gpio_to_irq(IMX_GPIO_NR(6, 7)),	/* NANDF_CLE */
 	},
 };
+#endif /* #ifndef SNACKERS_BOARD */
+#endif
 
+#ifndef SNACKERS_BOARD
+/*****************************************************************************************/
 static void camera_reset(int power_gp, int poweroff_level, int reset_gp, int reset_gp2)
 {
 	pr_info("%s: power_gp=0x%x, reset_gp=0x%x reset_gp2=0x%x\n",
@@ -533,6 +650,8 @@ static void camera_reset(int power_gp, int poweroff_level, int reset_gp, int res
 		gpio_direction_output(reset_gp2, 0);
 	msleep(1);
 }
+#endif /* #ifndef SNACKERS_BOARD */
+/*****************************************************************************************/
 
 #if defined(CSI0_CAMERA) || defined(MIPI_CAMERA)
 /*
@@ -552,6 +671,10 @@ static void unlock_i2c_3c_address(void)
 }
 #endif
 
+#if 0
+#ifndef SNACKERS_BOARD
+/*****************************************************************************************/
+/*****************************************************************************************/
 #ifdef MIPI_CAMERA
 /*
  * (ov5640 Mipi) - J16
@@ -891,6 +1014,10 @@ static struct fsl_mxc_lcd_platform_data adv7391_data = {
 	.disp_id = 0,
 	.default_ifmt = IPU_PIX_FMT_BT656,
 };
+#endif /* #ifndef SNACKERS_BOARD . use #if 0 so it's easy to see what code is commented out */
+#endif
+/*****************************************************************************************/
+/*****************************************************************************************/
 
 #ifdef CSI1_CAMERA
 
@@ -939,6 +1066,38 @@ static struct fsl_mxc_camera_platform_data ov5640_csi1_data = {
 };
 #endif
 
+#ifdef SNACKERS_BOARD
+/***********************************************************************************/
+/* Move touchscreen devices to I2C3 */
+#if 0
+static struct i2c_board_info mxc_i2c3_board_info[] __initdata = {
+	{
+		I2C_BOARD_INFO("egalax_ts", 0x4),
+		.irq = gpio_to_irq(GP_CAP_TCH_INT1),
+	},
+	{
+		I2C_BOARD_INFO("tsc2004", 0x48),
+		.platform_data	= &tsc2007_info,
+		.irq = gpio_to_irq(GP_DRGB_IRQGPIO),
+	},
+#if defined(CONFIG_TOUCHSCREEN_FT5X06) \
+	|| defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
+	{
+		I2C_BOARD_INFO("ft5x06-ts", 0x38),
+		.irq = gpio_to_irq(GP_CAP_TCH_INT1),
+	},
+#endif
+#if defined(CONFIG_TOUCHSCREEN_FUSION_F0710A) \
+	|| defined(CONFIG_TOUCHSCREEN_FUSION_F0710A_MODULE)
+	{
+		I2C_BOARD_INFO("fusion_F0710A", 0x10),
+		.irq = gpio_to_irq(GP_CAP_TCH_INT1),
+	},
+#endif
+};
+#endif
+/***********************************************************************************/
+#else
 static struct i2c_board_info mxc_i2c2_board_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("egalax_ts", 0x4),
@@ -979,6 +1138,8 @@ static struct i2c_board_info mxc_i2c2_board_info[] __initdata = {
 	},
 #endif
 };
+#endif /* SNACKERS_BOARD */
+/***********************************************************************************/
 
 static void usbotg_vbus(bool on)
 {
@@ -1080,6 +1241,7 @@ static struct ahci_platform_data sata_data = {
 	.exit = exit_sata,
 };
 
+#ifndef SNACKERS_BOARD
 static struct gpio flexcan_gpios[] = {
 	{ GP_CAN1_ERR, GPIOF_DIR_IN, "flexcan1-err" },
 	{ GP_CAN1_EN, GPIOF_OUT_INIT_LOW, "flexcan1-en" },
@@ -1106,6 +1268,7 @@ static const struct flexcan_platform_data
 	flexcan0_tja1040_pdata __initconst = {
 	.transceiver_switch = flexcan0_tja1040_switch,
 };
+#endif /* #ifndef SNACKERS_BOARD */
 
 static struct viv_gpu_platform_data imx6_gpu_pdata __initdata = {
 	.reserved_mem_size = SZ_128M,
@@ -1116,6 +1279,9 @@ static struct imx_asrc_platform_data imx_asrc_data = {
 	.clk_map_ver = 2,
 };
 
+#if 0
+#ifndef SNACKERS_BOARD
+/*********************************************************************/
 static struct ipuv3_fb_platform_data fb_data[] = {
 	{ /*fb0*/
 	.disp_dev = "ldb",
@@ -1193,6 +1359,9 @@ static struct fsl_mxc_hdmi_core_platform_data hdmi_core_data = {
 	.ipu_id = 0,
 	.disp_id = 1,
 };
+#endif /* #ifndef SNACKERS_BOARD */
+/*********************************************************************/
+#endif
 
 static void lcd_enable_pins(void)
 {
@@ -1214,6 +1383,7 @@ static struct fsl_mxc_lcd_platform_data lcdif_data = {
 	.disable_pins = lcd_disable_pins,
 };
 
+#ifndef SNACKERS_BOARD
 static struct fsl_mxc_ldb_platform_data ldb_data = {
 	.ipu_id = 1,
 	.disp_id = 0,
@@ -1222,6 +1392,7 @@ static struct fsl_mxc_ldb_platform_data ldb_data = {
 	.sec_ipu_id = 1,
 	.sec_disp_id = 1,
 };
+#endif /* #ifndef SNACKERS_BOARD */
 
 static struct fsl_mxc_lcd_platform_data bt656_data = {
 	.ipu_id = 0,
@@ -1229,6 +1400,7 @@ static struct fsl_mxc_lcd_platform_data bt656_data = {
 	.default_ifmt = IPU_PIX_FMT_BT656,
 };
 
+#ifndef SNACKERS_BOARD
 static struct imx_ipuv3_platform_data ipu_data[] = {
 	{
 	.rev = 4,
@@ -1238,6 +1410,7 @@ static struct imx_ipuv3_platform_data ipu_data[] = {
 	.csi_clk[0] = "clko2_clk",
 	},
 };
+#endif /* #ifndef SNACKERS_BOARD */
 
 static struct fsl_mxc_capture_platform_data capture_data[] = {
 #ifdef CSI0_CAMERA
@@ -1290,6 +1463,7 @@ static const struct pm_platform_data pm_data __initconst = {
 	.suspend_exit = suspend_exit,
 };
 
+#ifndef SNACKERS_BOARD
 #define GPIO_BUTTON(gpio_num, ev_code, act_low, descr, wake)	\
 {								\
 	.gpio		= gpio_num,				\
@@ -1341,6 +1515,7 @@ static void __init add_device_buttons(void)
 	}
 }
 #endif
+#endif /* #ifndef SNACKERS_BOARD */
 
 #ifdef CONFIG_WL12XX_PLATFORM_DATA
 static void wl1271_set_power(bool enable)
@@ -1494,6 +1669,8 @@ static struct platform_device sgtl5000_vddd_reg_devices = {
 
 #endif /* CONFIG_SND_SOC_SGTL5000 */
 
+#ifndef SNACKERS_BOARD
+/*****************************************************************************************/
 static int imx6_init_audio(void)
 {
 	mxc_register_device(&audio_device,
@@ -1511,6 +1688,8 @@ static int imx6_init_audio(void)
 #endif
 	return 0;
 }
+#endif /* #ifndef SNACKERS_BOARD */
+/*****************************************************************************************/
 
 /* PWM1_PWMO: backlight control on DRGB connector */
 static struct platform_pwm_backlight_data pwm1_backlight_data = {
@@ -1562,6 +1741,7 @@ static void __init fixup_mxc_board(struct machine_desc *desc, struct tag *tags,
 {
 }
 
+#ifndef SNACKERS_BOARD
 static struct mipi_csi2_platform_data mipi_csi2_pdata = {
 	.dphy_clk = "mipi_pllref_clk",
 	.pixel_clk = "emi_clk",
@@ -1575,6 +1755,8 @@ static int __init caam_setup(char *__unused)
 }
 early_param("caam", caam_setup);
 
+#endif /* #ifndef SNACKERS_BOARD */
+
 static const struct imx_pcie_platform_data pcie_data  __initconst = {
 	.pcie_pwr_en	= -EINVAL,
 	.pcie_rst	= -EINVAL, //GP_CAP_TCH_INT1,
@@ -1584,6 +1766,17 @@ static const struct imx_pcie_platform_data pcie_data  __initconst = {
 
 #define GPIOF_HIGH GPIOF_OUT_INIT_HIGH
 
+#ifdef SNACKERS_BOARD
+/********************************************************/
+
+struct gpio initial_gpios[] __initdata = {
+	{.label = "kill_power",	        .gpio = GP_KILL_POWER,	.flags = 0},           /* Deassert kill_power */
+	{.label = "sys_reset",	        .gpio = GP_SYS_RESET_B,	.flags = GPIOF_HIGH},  /* Deassert sys_reset */
+	{.label = "bt_power",	        .gpio = GP_BT_POWER,	.flags = 0},           /* Deassert bt_power */
+};
+
+/********************************************************/
+#else
 struct gpio initial_gpios[] __initdata = {
 	{.label = "ov5642_csi0_pwdn",	.gpio = GP_CSI0_PWN,	.flags = GPIOF_HIGH},
 	{.label = "ov5642_csi0_reset",	.gpio = GP_CSI0_RST,	.flags = 0},
@@ -1597,6 +1790,8 @@ struct gpio initial_gpios[] __initdata = {
 	{.label = "gs2971_csi1_reset",	.gpio = GP_GS2971_RST,	.flags = 0},
 #endif
 };
+#endif /* SNACKERS_BOARD */
+/********************************************************/
 
 static void poweroff(void)
 {
@@ -1627,6 +1822,164 @@ static void poweroff(void)
 /*!
  * Board specific initialization.
  */
+#ifdef SNACKERS_BOARD
+/**************************************************************************************/
+static void __init board_init(void)
+{
+	int i, j;
+	int ret;
+	struct clk *clko2;
+	struct clk *new_parent;
+	int rate;
+	unsigned mask;
+#ifdef ONE_WIRE
+	int one_wire_gp;
+#endif
+
+	ret = gpio_request_array(initial_gpios, ARRAY_SIZE(initial_gpios));
+	if (ret)
+		printk(KERN_ERR "%s gpio_request_array failed("
+			"%d) for initial_gpios\n", __func__, ret);
+
+    IOMUX_SETUP(snackers_pads);
+
+	lcd_disable_pins();
+
+	gp_reg_id = dvfscore_data.reg_id;
+	soc_reg_id = dvfscore_data.soc_id;
+	pu_reg_id = dvfscore_data.pu_id;
+
+	imx6q_add_imx_uart(1, NULL);
+
+	imx6q_add_vdoa();
+#if ! defined(CONFIG_MXC_VIDEO_GS2971) && ! defined(CONFIG_MXC_VIDEO_GS2971_MODULE) /* We need the pads for GS2971 */
+	imx6q_add_lcdif(&lcdif_data);
+#endif
+
+    imx6q_add_v4l2_output(0);
+	imx6q_add_bt656(&bt656_data);
+
+	mask = 0;
+	for (i = 0; i < ARRAY_SIZE(capture_data); i++) {
+		if (!cpu_is_mx6q())
+			capture_data[i].ipu = 0;
+		j = (capture_data[i].is_mipi << 2) | (capture_data[i].ipu << 1) | capture_data[i].csi;
+		if (!(mask & (1 << j))) {
+			mask |= (1 << j);
+			imx6q_add_v4l2_capture(i, &capture_data[i]);
+		}
+	}
+	imx6q_add_imx_snvs_rtc();
+#if 0
+	imx6q_add_imx_i2c(3, &i2c_data);
+	i2c_register_board_info(3, mxc_i2c3_board_info,
+			ARRAY_SIZE(mxc_i2c3_board_info));
+#endif
+	/* SPI */
+	imx6q_add_ecspi(3, &spi_data);
+	imx6q_add_ecspi(1, &ecspi2_data);
+	spi_device_init();
+
+	imx6q_add_anatop_thermal_imx(1, &anatop_thermal_data);
+	imx6_init_fec(fec_data);
+	imx6q_add_pm_imx(0, &pm_data);
+	imx6q_add_sdhci_usdhc_imx(3, &sd4_data);
+	imx_add_viv_gpu(&imx6_gpu_data, &imx6_gpu_pdata);
+	init_usb();
+	if (cpu_is_mx6q())
+		imx6q_add_ahci(0, &sata_data);
+	imx6q_add_vpu();
+	platform_device_register(&vmmc_reg_devices);
+	imx_asrc_data.asrc_core_clk = clk_get(NULL, "asrc_clk");
+	imx_asrc_data.asrc_audio_clk = clk_get(NULL, "asrc_serial_clk");
+	imx6q_add_asrc(&imx_asrc_data);
+
+	/* release USB Hub reset */
+	gpio_set_value(GP_USB_HUB_RESET, 1);
+
+	imx6q_add_mxc_pwm(0);
+	imx6q_add_mxc_pwm(1);
+	imx6q_add_mxc_pwm_pdata(2, &pwm3_data);
+	imx6q_add_mxc_pwm(3);
+
+	imx6q_add_mxc_pwm_backlight(0, &pwm1_backlight_data);
+	imx6q_add_mxc_pwm_backlight(3, &pwm4_backlight_data);
+
+	imx6q_add_otp();
+	imx6q_add_viim();
+	imx6q_add_imx2_wdt(0, NULL);
+	imx6q_add_dma();
+
+	imx6q_add_dvfs_core(&dvfscore_data);
+#if 0
+	add_device_buttons();
+
+	imx6q_add_hdmi_soc();
+	imx6q_add_hdmi_soc_dai();
+
+	ret = gpio_request_array(flexcan_gpios,
+			ARRAY_SIZE(flexcan_gpios));
+	if (ret) {
+		pr_err("failed to request flexcan1-gpios: %d\n", ret);
+	} else {
+		int ret = gpio_get_value(GP_CAN1_ERR);
+		if (ret == 0) {
+			imx6q_add_flexcan0(&flexcan0_tja1040_pdata);
+			pr_info("Flexcan NXP tja1040\n");
+		} else if (ret == 1) {
+			IOMUX_SETUP(mc33902_flexcan_pads);
+			imx6q_add_flexcan0(&flexcan0_mc33902_pdata);
+			pr_info("Flexcan Freescale mc33902\n");
+		} else {
+			pr_info("Flexcan gpio_get_value CAN1_ERR failed\n");
+		}
+	}
+#endif
+	clko2 = clk_get(NULL, "clko2_clk");
+	if (IS_ERR(clko2))
+		pr_err("can't get CLKO2 clock.\n");
+
+	new_parent = clk_get(NULL, "osc_clk");
+	if (!IS_ERR(new_parent)) {
+		clk_set_parent(clko2, new_parent);
+		clk_put(new_parent);
+	}
+	rate = clk_round_rate(clko2, 24000000);
+	clk_set_rate(clko2, rate);
+	clk_enable(clko2);
+	pm_power_off = poweroff;
+	imx6q_add_busfreq();
+
+#ifdef CONFIG_WL12XX_PLATFORM_DATA
+	if (isn6) {
+		imx6q_add_sdhci_usdhc_imx(1, &sd2_data);
+		/* WL12xx WLAN Init */
+		if (wl12xx_set_platform_data(&n6q_wlan_data))
+			pr_err("error setting wl12xx data\n");
+		platform_device_register(&n6q_vwl1271_reg_devices);
+
+		gpio_set_value(N6_WL1271_WL_EN, 1);		/* momentarily enable */
+		gpio_set_value(N6_WL1271_BT_EN, 1);
+		mdelay(2);
+		gpio_set_value(N6_WL1271_WL_EN, 0);
+		gpio_set_value(N6_WL1271_BT_EN, 0);
+
+		gpio_free(N6_WL1271_WL_EN);
+		gpio_free(N6_WL1271_BT_EN);
+		mdelay(1);
+	}
+#endif
+
+	imx6q_add_pcie(&pcie_data);
+
+	imx6_add_armpmu();
+	imx6q_add_perfmon(0);
+	imx6q_add_perfmon(1);
+	imx6q_add_perfmon(2);
+}
+
+/**************************************************************************************/
+#else
 static void __init board_init(void)
 {
 	int i, j;
@@ -1876,6 +2229,8 @@ static void __init board_init(void)
 	imx6q_add_perfmon(2);
 }
 
+#endif /*  SNACKERS_BOARD */
+
 extern void __iomem *twd_base;
 static void __init timer_init(void)
 {
@@ -1911,7 +2266,11 @@ static void __init reserve(void)
 /*
  * initialize __mach_desc_MX6Q_SABRELITE data structure.
  */
+#ifdef SNACKERS_BOARD
+MACHINE_START(MX6_NITROGEN6X, "AirMagnet Snackers Board")
+#else
 MACHINE_START(MX6_NITROGEN6X, "Boundary Devices Nitrogen6X/SABRE Lite Board")
+#endif
 	/* Maintainer: Boundary Devices */
 	.boot_params = MX6_PHYS_OFFSET + 0x100,
 	.fixup = fixup_mxc_board,
