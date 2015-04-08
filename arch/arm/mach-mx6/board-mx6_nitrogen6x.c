@@ -1,3 +1,7 @@
+#if 1
+#define SNACKERS_BOARD
+#endif
+
 /*
  * Copyright (C) 2011-2012 Freescale Semiconductor, Inc. All Rights Reserved.
  *
@@ -81,22 +85,33 @@
 #include "crm_regs.h"
 #include "cpu_op-mx6.h"
 
-#define SNACKERS_BOARD
 #ifdef SNACKERS_BOARD
 /*************************************************************/
 /* LKD GPIO definitions */
-#define GP_BT_POWER           IMX_GPIO_NR(7, 5)
-#define GP_ECSPI2_CS_EEPROM   IMX_GPIO_NR(2, 26)
-#define GP_ECSPI4_CS_SPINOR   IMX_GPIO_NR(3, 24)
-#define GP_ECSPI5_CS_DISPLAY  IMX_GPIO_NR(1, 19)
-#define GP_ENET_PHY_INT	      IMX_GPIO_NR(1, 28)
-#define GP_KILL_POWER         IMX_GPIO_NR(5, 22)
-#define GP_PHY_RESET          IMX_GPIO_NR(1, 25)
-#define GP_BACKLIGHT_ENABLE   IMX_GPIO_NR(1, 11)
-#define GP_SPI_FLASH_CS       IMX_GPIO_NR(3, 24)
-#define GP_SYS_RESET_B        IMX_GPIO_NR(3, 19)
-#define GP_USB_OTG_PWR        IMX_GPIO_NR(4, 15)
-#define GP_USB_HUB_RESET      IMX_GPIO_NR(5, 28)
+#define GP_BT_POWER               IMX_GPIO_NR(7,  5)
+#define GP_CAP_TCH_INT1	          IMX_GPIO_NR(2, 21)
+#define GP_DRGB_IRQGPIO	          IMX_GPIO_NR(2, 21)
+#define GP_ECSPI2_CS_EEPROM       IMX_GPIO_NR(2, 26)
+#define GP_ECSPI4_CS_SPINOR       IMX_GPIO_NR(3, 24)
+#define GP_ECSPI5_CS_DISPLAY      IMX_GPIO_NR(1, 19)
+#define GP_ENET_PHY_INT	          IMX_GPIO_NR(1, 28)
+#define GP_KILL_POWER             IMX_GPIO_NR(5, 22)
+#define GP_PCAP_SHUTDOWN          IMX_GPIO_NR(2, 22)
+#define GP_PCIE_SLOT1_SHDN_N      IMX_GPIO_NR(2, 16)
+#define GP_PCIE_SLOT1_STDBY_N     IMX_GPIO_NR(6,  6)
+#define GP_PCIE_SLOT1_SYS_RESET_N IMX_GPIO_NR(5,  4)
+#define GP_PHY_RESET              IMX_GPIO_NR(1, 25)
+#define GP_POE_ENABLE             IMX_GPIO_NR(6,  1)
+#define GP_BACKLIGHT_ENABLE       IMX_GPIO_NR(1, 11)
+#define GP_SPI_FLASH_CS           IMX_GPIO_NR(3, 24)
+#define GP_SYS_RESET_B            IMX_GPIO_NR(3, 19)
+#define GP_USB_OTG_PWR            IMX_GPIO_NR(4, 15)
+#define GP_USB_HUB_CFG_SEL0       IMX_GPIO_NR(4, 12)
+#define GP_USB_HUB_CFG_SEL1       IMX_GPIO_NR(5, 29)
+#define GP_USB_HUB_RESET          IMX_GPIO_NR(5, 28)
+#define GP_USB_HUB_LOCAL_PWR      IMX_GPIO_NR(5, 30)
+
+
 /*************************************************************/
 #else
 
@@ -393,6 +408,38 @@ static int ksz9031_send_phy_cmds(struct phy_device *phydev, unsigned short* p)
 
 static int fec_phy_init(struct phy_device *phydev)
 {
+#ifdef SNACKERS_BOARD
+    printk(KERN_INFO "%s(): Phy ID=0x%08X\n", __func__, phydev->phy_id );
+    /* prefer master mode */
+    phy_write(phydev, 0x9, 0x1f00);
+
+	if ((phydev->phy_id & 0x00fffff0) == PHY_ID_KSZ9031) {
+		ksz9031_send_phy_cmds(phydev, ksz9031_por_cmds);
+   		printk(KERN_INFO "%s(): configured KSZ9031\n", __func__);
+	}
+    else
+    {
+        /* KSZ9021 */
+
+        /* min rx data delay */
+        phy_write(phydev, 0x0b, 0x8105);
+        phy_write(phydev, 0x0c, 0x0000);
+
+        /* min tx data delay */
+        phy_write(phydev, 0x0b, 0x8106);
+        phy_write(phydev, 0x0c, 0x0000);
+
+        /* max rx/tx clock delay, min rx/tx control delay */
+        phy_write(phydev, 0x0b, 0x8104);
+        phy_write(phydev, 0x0c, 0xf0f0);
+        phy_write(phydev, 0x0b, 0x104);
+
+        printk(KERN_INFO "%s(): configured KSZ9021\n", __func__);
+    }
+
+	return 0;
+
+#else
 	if ((phydev->phy_id & 0x00fffff0) == PHY_ID_KSZ9031) {
 		ksz9031_send_phy_cmds(phydev, ksz9031_por_cmds);
 		return 0;
@@ -415,6 +462,7 @@ static int fec_phy_init(struct phy_device *phydev)
 	phy_write(phydev, 0x0b, 0x104);
 
 	return 0;
+#endif /* SNACKERS_BOARD */
 }
 
 static struct fec_platform_data fec_data __initdata = {
@@ -425,17 +473,6 @@ static struct fec_platform_data fec_data __initdata = {
 
 #ifdef SNACKERS_BOARD
 /************************************************************************/
-/* Using spi4 for the SPI NOR Flash boot device */
-static int spi_cs[] = {
-	GP_ECSPI4_CS_SPINOR,
-};
-
-static const struct spi_imx_master spi_data __initconst = {
-	.chipselect     = spi_cs,
-	.num_chipselect = ARRAY_SIZE(spi_cs),
-};
-
-/* spi2:  EEPROM and Temp Sensor */
 static int ecspi2_cs[] = {
 	GP_ECSPI2_CS_EEPROM,
 };
@@ -444,6 +481,26 @@ static const struct spi_imx_master ecspi2_data __initconst = {
 	.chipselect     = ecspi2_cs,
 	.num_chipselect = ARRAY_SIZE(ecspi2_cs),
 };
+
+/* Using spi4 for the SPI NOR Flash boot device */
+static int ecspi4_cs[] = {
+	GP_ECSPI4_CS_SPINOR,
+};
+
+static const struct spi_imx_master ecspi4_data __initconst = {
+	.chipselect     = ecspi4_cs,
+	.num_chipselect = ARRAY_SIZE(ecspi4_cs),
+};
+
+static int ecspi5_cs[] = {
+	GP_ECSPI5_CS_DISPLAY,
+};
+
+static const struct spi_imx_master ecspi5_data __initconst = {
+	.chipselect     = ecspi5_cs,
+	.num_chipselect = ARRAY_SIZE(ecspi5_cs),
+};
+
 /************************************************************************/
 #else
 static int spi_cs[] = {
@@ -509,7 +566,6 @@ static struct flash_platform_data spi_flash_data = {
 	.nr_parts = ARRAY_SIZE(spi_nor_partitions),
 	.type = "m25p16",
 };
-#endif
 
 static struct spi_board_info spi_nor_device[] __initdata = {
 #if defined(CONFIG_MTD_M25P80)
@@ -544,6 +600,7 @@ static struct spi_board_info spi_nor_device[] __initdata = {
 };
 #endif /* SNACKERS_BOARD  */
 /*****************************************************/
+#endif /* if defined(CONFIG_MTD_M25P80) || defined(CONFIG_MTD_M25P80_MODULE) */
 
 #if defined(CONFIG_MXC_VIDEO_GS2971) || defined(CONFIG_MXC_VIDEO_GS2971_MODULE)
 static struct fsl_mxc_camera_platform_data gs2971_data;
@@ -623,7 +680,7 @@ static struct imxi2c_platform_data i2c_data = {
 	.bitrate = 100000,
 };
 
-#if 0
+#if 1
 #ifndef SNACKERS_BOARD
 static struct i2c_board_info mxc_i2c0_board_info[] __initdata = {
 	{
@@ -671,7 +728,7 @@ static void unlock_i2c_3c_address(void)
 }
 #endif
 
-#if 0
+#if 1
 #ifndef SNACKERS_BOARD
 /*****************************************************************************************/
 /*****************************************************************************************/
@@ -1068,22 +1125,15 @@ static struct fsl_mxc_camera_platform_data ov5640_csi1_data = {
 
 #ifdef SNACKERS_BOARD
 /***********************************************************************************/
-/* Move touchscreen devices to I2C3 */
-#if 0
-static struct i2c_board_info mxc_i2c3_board_info[] __initdata = {
+static struct i2c_board_info mxc_i2c2_board_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("egalax_ts", 0x4),
 		.irq = gpio_to_irq(GP_CAP_TCH_INT1),
 	},
-	{
-		I2C_BOARD_INFO("tsc2004", 0x48),
-		.platform_data	= &tsc2007_info,
-		.irq = gpio_to_irq(GP_DRGB_IRQGPIO),
-	},
 #if defined(CONFIG_TOUCHSCREEN_FT5X06) \
 	|| defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
 	{
-		I2C_BOARD_INFO("ft5x06-ts", 0x38),
+		I2C_BOARD_INFO("ft5x06-ts", 0x3A),
 		.irq = gpio_to_irq(GP_CAP_TCH_INT1),
 	},
 #endif
@@ -1095,7 +1145,6 @@ static struct i2c_board_info mxc_i2c3_board_info[] __initdata = {
 	},
 #endif
 };
-#endif
 /***********************************************************************************/
 #else
 static struct i2c_board_info mxc_i2c2_board_info[] __initdata = {
@@ -1111,7 +1160,12 @@ static struct i2c_board_info mxc_i2c2_board_info[] __initdata = {
 #if defined(CONFIG_TOUCHSCREEN_FT5X06) \
 	|| defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
 	{
+#if 1
+    /* Use Snackers touch panel on Nitrogen6x. Change i2c address. */
+		I2C_BOARD_INFO("ft5x06-ts", 0x3A),
+#else
 		I2C_BOARD_INFO("ft5x06-ts", 0x38),
+#endif
 		.irq = gpio_to_irq(GP_CAP_TCH_INT1),
 	},
 #endif
@@ -1279,9 +1333,6 @@ static struct imx_asrc_platform_data imx_asrc_data = {
 	.clk_map_ver = 2,
 };
 
-#if 0
-#ifndef SNACKERS_BOARD
-/*********************************************************************/
 static struct ipuv3_fb_platform_data fb_data[] = {
 	{ /*fb0*/
 	.disp_dev = "ldb",
@@ -1310,6 +1361,9 @@ static struct ipuv3_fb_platform_data fb_data[] = {
 	},
 };
 
+#if 1
+#ifndef SNACKERS_BOARD
+/*********************************************************************/
 static void hdmi_init(int ipu_id, int disp_id)
 {
 	int hdmi_mux_setting;
@@ -1400,7 +1454,6 @@ static struct fsl_mxc_lcd_platform_data bt656_data = {
 	.default_ifmt = IPU_PIX_FMT_BT656,
 };
 
-#ifndef SNACKERS_BOARD
 static struct imx_ipuv3_platform_data ipu_data[] = {
 	{
 	.rev = 4,
@@ -1410,7 +1463,6 @@ static struct imx_ipuv3_platform_data ipu_data[] = {
 	.csi_clk[0] = "clko2_clk",
 	},
 };
-#endif /* #ifndef SNACKERS_BOARD */
 
 static struct fsl_mxc_capture_platform_data capture_data[] = {
 #ifdef CSI0_CAMERA
@@ -1691,6 +1743,17 @@ static int imx6_init_audio(void)
 #endif /* #ifndef SNACKERS_BOARD */
 /*****************************************************************************************/
 
+#ifdef SNACKERS_BOARD
+/* PWM1_PWMO: backlight control on DRGB connector */
+/* reverse logic for brightness control */
+static struct platform_pwm_backlight_data pwm1_backlight_data = {
+	.pwm_id = 0,	/* pin SD1_DATA3 - PWM1 */
+	.max_brightness = 1,
+	.dft_brightness = 128,
+	.pwm_period_ns = 1000000000/32768,
+};
+
+#else
 /* PWM1_PWMO: backlight control on DRGB connector */
 static struct platform_pwm_backlight_data pwm1_backlight_data = {
 	.pwm_id = 0,	/* pin SD1_DATA3 - PWM1 */
@@ -1698,7 +1761,7 @@ static struct platform_pwm_backlight_data pwm1_backlight_data = {
 	.dft_brightness = 256,
 	.pwm_period_ns = 1000000000/32768,
 };
-
+#endif /* SNACKERS_BOARD */
 static struct mxc_pwm_platform_data pwm3_data = {
 	.clk_select = PWM_CLK_HIGHPERF,
 };
@@ -1770,10 +1833,21 @@ static const struct imx_pcie_platform_data pcie_data  __initconst = {
 /********************************************************/
 
 struct gpio initial_gpios[] __initdata = {
-	{.label = "kill_power",	        .gpio = GP_KILL_POWER,	.flags = 0},           /* Deassert kill_power */
-	{.label = "sys_reset",	        .gpio = GP_SYS_RESET_B,	.flags = GPIOF_HIGH},  /* Deassert sys_reset */
-	{.label = "bt_power",	        .gpio = GP_BT_POWER,	.flags = 0},           /* Deassert bt_power */
-};
+	{.label = "kill_power",	        .gpio = GP_KILL_POWER,	           .flags = 0},           /* Deassert kill_power */
+	{.label = "sys_reset",	        .gpio = GP_SYS_RESET_B,	           .flags = GPIOF_HIGH},  /* Deassert sys_reset */
+	{.label = "backlight_enable",   .gpio = GP_BACKLIGHT_ENABLE,       .flags = GPIOF_HIGH},  /* Assert backlight_enable */
+	{.label = "bt_power",	        .gpio = GP_BT_POWER,	           .flags = 0},           /* Deassert bt_power */
+	{.label = "pcap_shutdown",	    .gpio = GP_PCAP_SHUTDOWN,	       .flags = GPIOF_HIGH},  /* Deassert pcap_shutdown */
+    {.label = "pcie_shutdown",	    .gpio = GP_PCIE_SLOT1_SHDN_N,	   .flags = GPIOF_HIGH},  /* Deassert pcie_shutdown */
+	{.label = "pcie_standby",	    .gpio = GP_PCIE_SLOT1_STDBY_N,	   .flags = GPIOF_HIGH},  /* Deassert pcie_standby */
+	{.label = "pcie_reset", 	    .gpio = GP_PCIE_SLOT1_SYS_RESET_N, .flags = 0},           /* Assert pcie_reset */
+    {.label = "phy_reset",	        .gpio = GP_PHY_RESET,	           .flags = GPIOF_HIGH},  /* Deassert phy_reset */
+    {.label = "poe_enable",	        .gpio = GP_POE_ENABLE,	           .flags = 0},           /* Deassert poe_enable */
+	{.label = "usb_hub_reset",	    .gpio = GP_USB_HUB_RESET,	       .flags = 0},           /* Assert usb_hub_reset */
+	{.label = "usb_local_pwr",	    .gpio = GP_USB_HUB_LOCAL_PWR,	   .flags = 0},           /* Assert usb_local_pwr */
+	{.label = "usb_hub_cfg_sel0",	.gpio = GP_USB_HUB_CFG_SEL0,	   .flags = 0},           /* default USB Hub cfg */
+	{.label = "usb_hub_cfg_sel1",	.gpio = GP_USB_HUB_CFG_SEL1,	   .flags = 0},           /* default USB Hub cfg */
+};  
 
 /********************************************************/
 #else
@@ -1851,6 +1925,17 @@ static void __init board_init(void)
 
 	imx6q_add_imx_uart(1, NULL);
 
+	imx6q_add_ipuv3(0, &ipu_data[0]);
+	if (cpu_is_mx6q()) {
+		imx6q_add_ipuv3(1, &ipu_data[1]);
+		j = ARRAY_SIZE(fb_data);
+	} else {
+		j = (ARRAY_SIZE(fb_data) + 1) / 2;
+		/*adv7180_data.ipu = 0;*/
+	}
+	for (i = 0; i < j; i++)
+		imx6q_add_ipuv3fb(i, &fb_data[i]);
+
 	imx6q_add_vdoa();
 #if ! defined(CONFIG_MXC_VIDEO_GS2971) && ! defined(CONFIG_MXC_VIDEO_GS2971_MODULE) /* We need the pads for GS2971 */
 	imx6q_add_lcdif(&lcdif_data);
@@ -1870,14 +1955,15 @@ static void __init board_init(void)
 		}
 	}
 	imx6q_add_imx_snvs_rtc();
-#if 0
-	imx6q_add_imx_i2c(3, &i2c_data);
-	i2c_register_board_info(3, mxc_i2c3_board_info,
-			ARRAY_SIZE(mxc_i2c3_board_info));
-#endif
-	/* SPI */
-	imx6q_add_ecspi(3, &spi_data);
-	imx6q_add_ecspi(1, &ecspi2_data);
+
+    imx6q_add_imx_i2c(2, &i2c_data);
+	i2c_register_board_info(2, mxc_i2c2_board_info,
+			ARRAY_SIZE(mxc_i2c2_board_info));
+
+    /* SPI */
+    imx6q_add_ecspi(1, &ecspi2_data);
+	imx6q_add_ecspi(3, &ecspi4_data);
+	imx6q_add_ecspi(4, &ecspi5_data);
 	spi_device_init();
 
 	imx6q_add_anatop_thermal_imx(1, &anatop_thermal_data);
@@ -1897,6 +1983,11 @@ static void __init board_init(void)
 	/* release USB Hub reset */
 	gpio_set_value(GP_USB_HUB_RESET, 1);
 
+    /* LKD: The initialization of the i2c pads has to happen after the USB */
+    /* Hub reset is released because a USB Hub CFG_SEL0 signal shares a pin */
+    /* with the I2C2 clock signal */
+    IOMUX_SETUP(snackers_i2c_pads);
+
 	imx6q_add_mxc_pwm(0);
 	imx6q_add_mxc_pwm(1);
 	imx6q_add_mxc_pwm_pdata(2, &pwm3_data);
@@ -1911,31 +2002,8 @@ static void __init board_init(void)
 	imx6q_add_dma();
 
 	imx6q_add_dvfs_core(&dvfscore_data);
-#if 0
-	add_device_buttons();
 
-	imx6q_add_hdmi_soc();
-	imx6q_add_hdmi_soc_dai();
-
-	ret = gpio_request_array(flexcan_gpios,
-			ARRAY_SIZE(flexcan_gpios));
-	if (ret) {
-		pr_err("failed to request flexcan1-gpios: %d\n", ret);
-	} else {
-		int ret = gpio_get_value(GP_CAN1_ERR);
-		if (ret == 0) {
-			imx6q_add_flexcan0(&flexcan0_tja1040_pdata);
-			pr_info("Flexcan NXP tja1040\n");
-		} else if (ret == 1) {
-			IOMUX_SETUP(mc33902_flexcan_pads);
-			imx6q_add_flexcan0(&flexcan0_mc33902_pdata);
-			pr_info("Flexcan Freescale mc33902\n");
-		} else {
-			pr_info("Flexcan gpio_get_value CAN1_ERR failed\n");
-		}
-	}
-#endif
-	clko2 = clk_get(NULL, "clko2_clk");
+    clko2 = clk_get(NULL, "clko2_clk");
 	if (IS_ERR(clko2))
 		pr_err("can't get CLKO2 clock.\n");
 
@@ -1950,25 +2018,8 @@ static void __init board_init(void)
 	pm_power_off = poweroff;
 	imx6q_add_busfreq();
 
-#ifdef CONFIG_WL12XX_PLATFORM_DATA
-	if (isn6) {
-		imx6q_add_sdhci_usdhc_imx(1, &sd2_data);
-		/* WL12xx WLAN Init */
-		if (wl12xx_set_platform_data(&n6q_wlan_data))
-			pr_err("error setting wl12xx data\n");
-		platform_device_register(&n6q_vwl1271_reg_devices);
-
-		gpio_set_value(N6_WL1271_WL_EN, 1);		/* momentarily enable */
-		gpio_set_value(N6_WL1271_BT_EN, 1);
-		mdelay(2);
-		gpio_set_value(N6_WL1271_WL_EN, 0);
-		gpio_set_value(N6_WL1271_BT_EN, 0);
-
-		gpio_free(N6_WL1271_WL_EN);
-		gpio_free(N6_WL1271_BT_EN);
-		mdelay(1);
-	}
-#endif
+    /* Release PCIe reset */
+	gpio_set_value(GP_PCIE_SLOT1_SYS_RESET_N, 1);
 
 	imx6q_add_pcie(&pcie_data);
 

@@ -1,5 +1,7 @@
+#if 1
 /* LKD: Modifications to IOMuxing for the Snackers board */
 #define SNACKERS_BOARD
+#endif
 
 #undef MX6PAD
 #undef MX6NAME
@@ -141,6 +143,7 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(RGMII_RD3__ENET_RGMII_RD3),
 	MX6PAD(RGMII_RX_CTL__ENET_RGMII_RX_CTL),
 	MX6PAD(ENET_TX_EN__GPIO_1_28),		/* Micrel RGMII Phy Interrupt */
+    MX6PAD(ENET_CRS_DV__GPIO_1_25),  /* Phy reset */
 
 	/* GPIOs - Sorted by schematic signal name */
 	MX6PAD(SD2_CMD__GPIO_1_11),         /* BACKLIGHT_ENABLE*/
@@ -159,7 +162,8 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(GPIO_9__GPIO_1_9),           /* IMX_DBG_33_3 */
 	MX6PAD(CSI0_DAT4__GPIO_5_22),       /* KILL_POWER */
 	MX6PAD(SD2_DAT0__GPIO_1_15),        /* LCD_RESX */
-	MX6PAD(EIM_A16__GPIO_2_22),		    /* PCAP_SHUTDOWN */
+    MX6PAD(EIM_A17__GPIO_2_21),	        /* PCAP_INT */
+	MX6PAD(EIM_A16__GPIO_2_22),		    /* PCAP_SHUTDOWN (touchscreen) */
 	MX6PAD(EIM_A22__GPIO_2_16),		    /* PCIE_SLOT1_SHDN_N */
 	MX6PAD(EIM_A23__GPIO_6_6),		    /* PCIE_SLOT1_STDBY_N */
 	MX6PAD(EIM_A24__GPIO_5_4),		    /* PCIE_SLOT1_SYS_RESET_N */
@@ -167,31 +171,24 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(CSI0_DAT16__GPIO_6_2),	    /* POE_CLASS1 */
 	MX6PAD(CSI0_DAT17__GPIO_6_3),	    /* POE_CLASS4 */
 	MX6PAD(CSI0_DAT15__GPIO_6_1),	    /* POE_ENABLE */
-	MX6PAD(EIM_D29__GPIO_3_29),		    /* PWR_BTN_SNSE */
+	MX6PAD(CSI0_DAT14__GPIO_6_0),	    /* POE_GOOD */
+	MX6PAD(CSI0_DAT13__GPIO_5_31),	    /* POE_TP2 */
+    MX6PAD(EIM_D29__GPIO_3_29),		    /* PWR_BTN_SNSE */
 	MX6PAD(EIM_D27__GPIO_3_27),		    /* PWR_SW_B */
 	MX6PAD(KEY_ROW2__GPIO_4_11),	    /* RUN_SELFTEST_B */
 	MX6PAD(KEY_COL2__GPIO_4_10),	    /* SPI_NOR_WP */
 	MX6PAD(EIM_D19__GPIO_3_19),	        /* SYS_RESET_B */
+	MX6PAD(KEY_COL3__GPIO_4_12),	    /* USB Hub CFG_SEL0 */
+	MX6PAD(CSI0_DAT11__GPIO_5_29),	    /* USB Hub CFG_SEL1 */
 	MX6PAD(CSI0_DAT10__GPIO_5_28),	    /* USB Hub Reset */
+	MX6PAD(CSI0_DAT12__GPIO_5_30),	    /* USB Hub SUSP_IND/LOCAL_PWR */
 	MX6PAD(KEY_ROW4__GPIO_4_15),        /* USB_OTG_PWR_EN */
-	MX6PAD(EIM_D16__GPIO_3_16),         /* WIFI_V1 */
-
-	/* I2C1, PMIC */
-	MX6PAD(CSI0_DAT9__I2C1_SCL),	    /* GPIO5[27] */
-	MX6PAD(CSI0_DAT8__I2C1_SDA),	    /* GPIO5[26] */
-
-    /* I2C2: MFI, USB Hub */
-	MX6PAD(KEY_COL3__I2C2_SCL),	        /* GPIO4[12] */
-	MX6PAD(KEY_ROW3__I2C2_SDA),	        /* GPIO4[13] */
-
-    /* I2C3: Battery Charger, Touch Panel */
-	MX6PAD(EIM_D17__I2C3_SCL),	        /* GPIO3[17] */
-	MX6PAD(EIM_D18__I2C3_SDA),	        /* GPIO3[18] */
+	MX6PAD(EIM_D16__GPIO_3_16),         /* WIFI_V1 - switch antenna */
 
 	/* DISPLAY */
-	NEW_PAD_CTRL(MX6PAD(EIM_A17__GPIO_2_21),
-		     WEAK_PULLUP),			/* I2C Touch IRQ */
 #if 0
+	NEW_PAD_CTRL(MX6PAD(SD2_DAT0__GPIO_1_15),
+		     WEAK_PULLUP),			/* I2C Touch IRQ */
 	MX6PAD(GPIO_7__GPIO_1_7),		/* J7 - Display Connector GP */
 	MX6PAD(GPIO_9__GPIO_1_9),		/* J7 - Display Connector GP */
 	MX6PAD(NANDF_D0__GPIO_2_0),		/* J6 - LVDS Display contrast */
@@ -215,6 +212,21 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	/* USDHC4 - eMMC */
 	SD_PINS(4, USDHC_PAD_CTRL_50MHZ),
 	0
+};
+
+static iomux_v3_cfg_t MX6NAME(snackers_i2c_pads)[] = {
+	/* I2C1, PMIC */
+	MX6PAD(CSI0_DAT9__I2C1_SCL),	    /* GPIO5[27] */
+	MX6PAD(CSI0_DAT8__I2C1_SDA),	    /* GPIO5[26] */
+
+    /* I2C2: MFI, USB Hub */
+	MX6PAD(KEY_COL3__I2C2_SCL),	        /* GPIO4[12] */
+	MX6PAD(KEY_ROW3__I2C2_SDA),	        /* GPIO4[13] */
+
+    /* I2C3: Battery Charger, Touch Panel */
+	MX6PAD(EIM_D17__I2C3_SCL),	        /* GPIO3[17] */
+	MX6PAD(EIM_D18__I2C3_SDA),	        /* GPIO3[18] */
+
 };
 /***************************************************************************************/
 #else
