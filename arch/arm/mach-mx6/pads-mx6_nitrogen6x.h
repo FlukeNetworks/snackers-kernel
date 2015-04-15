@@ -46,6 +46,7 @@
 #define MX6Q_PAD_SD4_DAT2__USDHC4_DAT2	MX6Q_PAD_SD4_DAT2__USDHC4_DAT2_50MHZ
 #define MX6Q_PAD_SD4_DAT3__USDHC4_DAT3	MX6Q_PAD_SD4_DAT3__USDHC4_DAT3_50MHZ
 #ifdef SNACKERS_BOARD
+/* Add 4 more data lines for a total of 8 lines on the Snackers board */
 #define MX6Q_PAD_SD4_DAT4__USDHC4_DAT4	MX6Q_PAD_SD4_DAT4__USDHC4_DAT4_50MHZ
 #define MX6Q_PAD_SD4_DAT5__USDHC4_DAT5	MX6Q_PAD_SD4_DAT5__USDHC4_DAT5_50MHZ
 #define MX6Q_PAD_SD4_DAT6__USDHC4_DAT6	MX6Q_PAD_SD4_DAT6__USDHC4_DAT6_50MHZ
@@ -67,6 +68,7 @@
 #define MX6DL_PAD_SD4_DAT2__USDHC4_DAT2	MX6DL_PAD_SD4_DAT2__USDHC4_DAT2_50MHZ
 #define MX6DL_PAD_SD4_DAT3__USDHC4_DAT3	MX6DL_PAD_SD4_DAT3__USDHC4_DAT3_50MHZ
 #ifdef SNACKERS_BOARD
+/* Add 4 more data lines for a total of 8 lines on the Snackers board */
 #define MX6DL_PAD_SD4_DAT4__USDHC4_DAT4	MX6DL_PAD_SD4_DAT4__USDHC4_DAT4_50MHZ
 #define MX6DL_PAD_SD4_DAT5__USDHC4_DAT5	MX6DL_PAD_SD4_DAT5__USDHC4_DAT5_50MHZ
 #define MX6DL_PAD_SD4_DAT6__USDHC4_DAT6	MX6DL_PAD_SD4_DAT6__USDHC4_DAT6_50MHZ
@@ -92,6 +94,7 @@
 	NP(id, DAT7, pad_ctl)
 /***************************************************************************************/
 #else
+
 #define SD_PINS(id, pad_ctl) \
 	NP(id, CLK, pad_ctl),	\
 	NP(id, CMD, pad_ctl),	\
@@ -126,7 +129,8 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(SD1_DAT1__GPIO_1_17),	/* SS0 Bluetooth*/
 	MX6PAD(SD1_DAT2__GPIO_1_19),	/* SS1 Display */
 #endif
-	/* ENET */
+
+    /* ENET */
 	MX6PAD(ENET_MDIO__ENET_MDIO),
 	MX6PAD(ENET_MDC__ENET_MDC),
 	MX6PAD(RGMII_TXC__ENET_RGMII_TXC),
@@ -226,10 +230,12 @@ static iomux_v3_cfg_t MX6NAME(snackers_i2c_pads)[] = {
     /* I2C3: Battery Charger, Touch Panel */
 	MX6PAD(EIM_D17__I2C3_SCL),	        /* GPIO3[17] */
 	MX6PAD(EIM_D18__I2C3_SDA),	        /* GPIO3[18] */
-
+    0
 };
+
 /***************************************************************************************/
 #else
+
 static iomux_v3_cfg_t MX6NAME(nitrogen6x_pads)[] = {
 	/* AUDMUX */
 	MX6PAD(CSI0_DAT7__AUDMUX_AUD3_RXD),
@@ -472,7 +478,6 @@ static iomux_v3_cfg_t MX6NAME(common_pads)[] = {
 	MX6PAD(NANDF_D7__GPIO_2_7),		/* SD4_WP */
 	0
 };
-
 #endif /* SNACKERS_BOARD */
 /***************************************************************************************/
 
@@ -547,8 +552,6 @@ static iomux_v3_cfg_t MX6NAME(lcd_pads_disable)[] = {
 	0
 };
 
-#ifndef SNACKERS_BOARD
-/******************************************************************************************************/
 #if defined(CONFIG_MXC_CAMERA_OV5640_MIPI) || defined(CONFIG_MXC_CAMERA_OV5640_MIPI_MODULE) || \
     defined(CONFIG_MXC_HDMI_CSI2_TC358743) || defined(CONFIG_MXC_HDMI_CSI2_TC358743_MODULE)
 static iomux_v3_cfg_t MX6NAME(mipi_pads)[] = {
@@ -644,6 +647,7 @@ static iomux_v3_cfg_t MX6NAME(gs2971_video_pads_cea861)[] = {
 };
 #endif
 
+#ifndef SNACKERS_BOARD /* Not in Snackers */
 static iomux_v3_cfg_t MX6NAME(adv7180_video_pads_no_cea861)[] = {
 	/* sav/eav codes are used */
 	NEW_PAD_CTRL(MX6PAD(EIM_DA11__GPIO_3_11), WEAK_PULLUP),	/* Not HSYNC */
@@ -681,37 +685,19 @@ static iomux_v3_cfg_t MX6NAME(mc33902_flexcan_pads)[] = {
 	NEW_PAD_CTRL(MX6PAD(GPIO_7__GPIO_1_7), CAN1_ERR_PADCFG),
 	0
 };
-#endif /*  ifndef SNACKERS_BOARD */
-/******************************************************************************************************/
+#endif /* Not in Snackers */
 
 #define MX6_USDHC_PAD_SETTING(id, speed, pad_ctl)	\
 		MX6NAME(sd##id##_##speed##mhz)[] = { SD_PINS(id, pad_ctl), 0 }
 
-#ifdef SNACKERS_BOARD
-/******************************************************************************************************/
-static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(4, 50, USDHC_PAD_CTRL_50MHZ);
-static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(4, 100, USDHC_PAD_CTRL_100MHZ);
-static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(4, 200, USDHC_PAD_CTRL_200MHZ);
-
-#define _50MHZ 0
-#define _100MHZ 1
-#define _200MHZ 2
-#define SD_SPEED_CNT 3
-static iomux_v3_cfg_t * MX6NAME(sd_pads)[] =
-{
-	MX6NAME(sd4_50mhz),
-	MX6NAME(sd4_100mhz),
-	MX6NAME(sd4_200mhz),
-};
-
-/******************************************************************************************************/
-#else
+#ifndef SNACKERS_BOARD
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(2, 50, USDHC_PAD_CTRL_22KPU_40OHM_50MHZ);
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(2, 100, USDHC_PAD_CTRL_100MHZ);
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(2, 200, USDHC_PAD_CTRL_200MHZ);
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(3, 50, USDHC_PAD_CTRL_50MHZ);
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(3, 100, USDHC_PAD_CTRL_100MHZ);
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(3, 200, USDHC_PAD_CTRL_200MHZ);
+#endif
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(4, 50, USDHC_PAD_CTRL_50MHZ);
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(4, 100, USDHC_PAD_CTRL_100MHZ);
 static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(4, 200, USDHC_PAD_CTRL_200MHZ);
@@ -722,16 +708,16 @@ static iomux_v3_cfg_t MX6_USDHC_PAD_SETTING(4, 200, USDHC_PAD_CTRL_200MHZ);
 #define SD_SPEED_CNT 3
 static iomux_v3_cfg_t * MX6NAME(sd_pads)[] =
 {
+#ifndef SNACKERS_BOARD
 	MX6NAME(sd2_50mhz),
 	MX6NAME(sd2_100mhz),
 	MX6NAME(sd2_200mhz),
 	MX6NAME(sd3_50mhz),
 	MX6NAME(sd3_100mhz),
 	MX6NAME(sd3_200mhz),
+#endif
 	MX6NAME(sd4_50mhz),
 	MX6NAME(sd4_100mhz),
 	MX6NAME(sd4_200mhz),
 };
-#endif /* SNACKERS_BOARD */
-/******************************************************************************************************/
 
