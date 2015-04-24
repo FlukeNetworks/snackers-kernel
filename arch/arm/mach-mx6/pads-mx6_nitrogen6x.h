@@ -182,7 +182,7 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(KEY_ROW2__GPIO_4_11),	    /* RUN_SELFTEST_B */
 	MX6PAD(KEY_COL2__GPIO_4_10),	    /* SPI_NOR_WP */
 	MX6PAD(EIM_D19__GPIO_3_19),	        /* SYS_RESET_B */
-	MX6PAD(KEY_COL3__GPIO_4_12),	    /* USB Hub CFG_SEL0 */
+	MX6PAD(EIM_D17__GPIO_3_17),	    /* USB Hub CFG_SEL0 */
 	MX6PAD(CSI0_DAT11__GPIO_5_29),	    /* USB Hub CFG_SEL1 */
 	MX6PAD(CSI0_DAT10__GPIO_5_28),	    /* USB Hub Reset */
 	MX6PAD(CSI0_DAT12__GPIO_5_30),	    /* USB Hub SUSP_IND/LOCAL_PWR */

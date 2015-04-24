@@ -184,7 +184,7 @@
 #define GP_SPI_FLASH_CS           IMX_GPIO_NR(3, 24)
 #define GP_SYS_RESET_B            IMX_GPIO_NR(3, 19)
 #define GP_USB_OTG_PWR            IMX_GPIO_NR(4, 15)
-#define GP_USB_HUB_CFG_SEL0       IMX_GPIO_NR(4, 12)
+#define GP_USB_HUB_CFG_SEL0       IMX_GPIO_NR(3, 17)
 #define GP_USB_HUB_CFG_SEL1       IMX_GPIO_NR(5, 29)
 #define GP_USB_HUB_RESET          IMX_GPIO_NR(5, 28)
 #define GP_USB_HUB_LOCAL_PWR      IMX_GPIO_NR(5, 30)
@@ -1869,6 +1869,7 @@ static void __init board_init(void)
 			ARRAY_SIZE(mxc_i2c2_board_info));
 
 	/* SPI */
+	imx6q_add_ecspi(1, &ecspi2_data); /* EEPROM */
 	imx6q_add_ecspi(3, &ecspi4_data); /* SPI Nor Flash */
 	imx6q_add_ecspi(4, &ecspi5_data); /* LCD */
 	spi_device_init();
