@@ -997,7 +997,13 @@ static struct fsl_mxc_camera_platform_data gs2971_data = {
 };
 #endif
 
-#ifndef SNACKERS_BOARD
+#ifdef SNACKERS_BOARD
+static struct i2c_board_info mxc_i2c1_board_info[] __initdata = {
+	{
+		I2C_BOARD_INFO("apple_mfi", 0x11),
+	},
+};
+#else
 static struct i2c_board_info mxc_i2c1_board_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("mxc_hdmi_i2c", 0x50),
@@ -1863,8 +1869,12 @@ static void __init board_init(void)
 
 	imx6q_add_lcdif(&lcdif_data);
 	imx6q_add_imx_snvs_rtc();
+
+    imx6q_add_imx_i2c(1, &i2c_data);
 	imx6q_add_imx_i2c(2, &i2c_data);
 
+	i2c_register_board_info(1, mxc_i2c1_board_info,
+			ARRAY_SIZE(mxc_i2c1_board_info));
 	i2c_register_board_info(2, mxc_i2c2_board_info,
 			ARRAY_SIZE(mxc_i2c2_board_info));
 
