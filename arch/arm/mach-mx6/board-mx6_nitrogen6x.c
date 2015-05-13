@@ -1778,7 +1778,6 @@ struct gpio initial_gpios[] __initdata = {
     {.label = "pcie_shutdown",	    .gpio = GP_PCIE_SLOT1_SHDN_N,	   .flags = GPIOF_HIGH},  /* Deassert pcie_shutdown */
 	{.label = "pcie_standby",	    .gpio = GP_PCIE_SLOT1_STDBY_N,	   .flags = GPIOF_HIGH},  /* Deassert pcie_standby */
 	{.label = "pcie_reset", 	    .gpio = GP_PCIE_SLOT1_SYS_RESET_N, .flags = 0},           /* Assert pcie_reset */
-    {.label = "poe_enable",	        .gpio = GP_POE_ENABLE,	           .flags = 0},           /* Deassert poe_enable */
 	{.label = "usb_hub_reset",	    .gpio = GP_USB_HUB_RESET,	       .flags = 0},           /* Assert usb_hub_reset */
 	{.label = "usb_local_pwr",	    .gpio = GP_USB_HUB_LOCAL_PWR,	   .flags = 0},           /* Assert usb_local_pwr */
 	{.label = "usb_hub_cfg_sel0",	.gpio = GP_USB_HUB_CFG_SEL0,	   .flags = 0},           /* default USB Hub cfg */
@@ -1858,13 +1857,8 @@ static void __init board_init(void)
 		imx6q_add_ipuv3(1, &ipu_data[1]);
 		j = ARRAY_SIZE(fb_data);
 	} 
-#if 0
-	else {
-		j = (ARRAY_SIZE(fb_data) + 1) / 2;
-		adv7180_data.ipu = 0;
-	}
-#endif
-	for (i = 0; i < j; i++)
+
+    for (i = 0; i < j; i++)
 		imx6q_add_ipuv3fb(i, &fb_data[i]);
 
 	imx6q_add_lcdif(&lcdif_data);
@@ -1893,11 +1887,7 @@ static void __init board_init(void)
 	if (cpu_is_mx6q())
 		imx6q_add_ahci(0, &sata_data);
 	imx6q_add_vpu();
-	imx6_init_audio();
 	platform_device_register(&vmmc_reg_devices);
-	imx_asrc_data.asrc_core_clk = clk_get(NULL, "asrc_clk");
-	imx_asrc_data.asrc_audio_clk = clk_get(NULL, "asrc_serial_clk");
-	imx6q_add_asrc(&imx_asrc_data);
 
 	/* release USB Hub reset */
 	gpio_set_value(GP_USB_HUB_RESET, 1);
