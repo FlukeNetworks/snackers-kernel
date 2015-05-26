@@ -587,10 +587,27 @@ static struct spi_board_info spi_gs2971_device[] __initdata = {
 };
 #endif
 
+#ifdef SNACKERS_BOARD
+
+static struct spi_board_info spi_eeprom_device[] __initdata = {
+	{
+		.modalias = "spidev",
+		.max_speed_hz = 10000000, /* max spi clock (SCK) speed in HZ */
+		.bus_num = 1,
+		.chip_select = 0,
+	},
+};
+
+#endif
+
 static void spi_device_init(void)
 {
 	spi_register_board_info(spi_nor_device,
 				ARRAY_SIZE(spi_nor_device));
+#ifdef SNACKERS_BOARD
+	spi_register_board_info(spi_eeprom_device,
+				ARRAY_SIZE(spi_eeprom_device));
+#endif
 #if defined(CONFIG_MXC_VIDEO_GS2971) || defined(CONFIG_MXC_VIDEO_GS2971_MODULE)
 	spi_register_board_info(spi_gs2971_device, ARRAY_SIZE(spi_gs2971_device));
 #endif
