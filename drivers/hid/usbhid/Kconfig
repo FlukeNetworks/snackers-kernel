@@ -24,6 +24,13 @@ config USB_HID
 comment "Input core support is needed for USB HID input layer or HIDBP support"
 	depends on USB_HID && INPUT=n
 
+config IAP_HID
+    bool "Enable support for iAP (iPod Accessory Protocol) HID"
+    default n
+    depends on USB_HID
+    help
+        Enable support for iPod accessory protocol on USB HID class.    
+    
 config HID_PID
 	bool "PID device support"
 	help

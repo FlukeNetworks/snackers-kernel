@@ -124,9 +124,33 @@ int usb_choose_configuration(struct usb_device *udev)
 						USB_CLASS_VENDOR_SPEC &&
 				(desc && desc->bInterfaceClass !=
 						USB_CLASS_VENDOR_SPEC)) {
-			best = c;
-			break;
-		}
+                        
+#ifdef CONFIG_IAP_HID
+            /* ALLGO: Check if the connected device is an IPOD device */
+            if((udev->descriptor.idVendor == 0x05AC) && 
+                    (udev->descriptor.idProduct & 0x12FF)) {
+
+                dev_info(&udev->dev, "IPOD Device-ID: 0x%hx\n", 
+                        udev->descriptor.idVendor);
+
+                dev_info(&udev->dev, "IPOD Vendor-ID: 0x%hx\n", 
+                        udev->descriptor.idProduct);
+
+             /* If ipod supports more than 1 configurations then
+                                   * by default enable second configuration */
+                if ( num_configs > 1 ) {
+                    /* Choose 2nd configuration */
+                    printk("2nd configuration \n");    
+                    c++;
+                }
+                else{
+                    printk("1st configuration \n");    
+                }
+            }
+#endif                            
+            best = c;
+            break;
+        }
 
 		/* If all the remaining configs are vendor-specific,
 		 * choose the first one. */

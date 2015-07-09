@@ -20,6 +20,12 @@
 
 #include "../hid-ids.h"
 
+#ifdef CONFIG_IAP_HID
+/* ALLGO: Added IPOD devices */
+#define USB_VENDOR_ID_IPOD       0x05AC
+#define USB_PRODUCT_ID_IPOD      0x12FF
+#endif
+
 /*
  * Alphabetically sorted blacklist by quirk type.
  */
@@ -29,6 +35,9 @@ static const struct hid_blacklist {
 	__u16 idProduct;
 	__u32 quirks;
 } hid_blacklist[] = {
+#ifdef CONFIG_IAP_HID
+	{ USB_VENDOR_ID_IPOD, USB_PRODUCT_ID_IPOD, HID_QUIRK_NOGET },
+#endif
 	{ USB_VENDOR_ID_AASHIMA, USB_DEVICE_ID_AASHIMA_GAMEPAD, HID_QUIRK_BADPAD },
 	{ USB_VENDOR_ID_AASHIMA, USB_DEVICE_ID_AASHIMA_PREDATOR, HID_QUIRK_BADPAD },
 	{ USB_VENDOR_ID_ALPS, USB_DEVICE_ID_IBM_GAMEPAD, HID_QUIRK_BADPAD },
@@ -277,9 +286,17 @@ static const struct hid_blacklist *usbhid_exists_squirk(const u16 idVendor,
 	int n = 0;
 
 	for (; hid_blacklist[n].idVendor; n++)
-		if (hid_blacklist[n].idVendor == idVendor &&
-				hid_blacklist[n].idProduct == idProduct)
-			bl_entry = &hid_blacklist[n];
+    /* ALLGO: Quirk product id comparsion code replaced with a masked check
+         * for the blacklist table entires */
+        if (hid_blacklist[n].idVendor == idVendor &&
+#ifdef CONFIG_IAP_HID
+                hid_blacklist[n].idProduct & idProduct
+#else
+                hid_blacklist[n].idProduct == idProduct
+#endif
+           )
+
+           bl_entry = &hid_blacklist[n];
 
 	if (bl_entry != NULL)
 		dbg_hid("Found squirk 0x%x for USB HID vendor 0x%hx prod 0x%hx\n",
