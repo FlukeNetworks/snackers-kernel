@@ -35,6 +35,7 @@ static int pwm_beeper_event(struct input_dev *input,
 	struct pwm_beeper *beeper = input_get_drvdata(input);
 	unsigned long period;
 
+
 	if (type != EV_SND || value < 0)
 		return -EINVAL;
 
@@ -42,7 +43,7 @@ static int pwm_beeper_event(struct input_dev *input,
 	case SND_BELL:
 		value = value ? 1000 : 0;
 		break;
-	case SND_TONE:
+    case SND_TONE:
 		break;
 	default:
 		return -EINVAL;
@@ -50,7 +51,9 @@ static int pwm_beeper_event(struct input_dev *input,
 
 	if (value == 0) {
 		pwm_config(beeper->pwm, 0, 0);
+#if 0
 		pwm_disable(beeper->pwm);
+#endif
 	} else {
 		period = HZ_TO_NANOSECONDS(value);
 		ret = pwm_config(beeper->pwm, period / 2, period);
@@ -70,6 +73,7 @@ static int __devinit pwm_beeper_probe(struct platform_device *pdev)
 	unsigned long pwm_id = (unsigned long)pdev->dev.platform_data;
 	struct pwm_beeper *beeper;
 	int error;
+    printk(KERN_INFO "%s(): id=%d \n", __func__, pwm_id);
 
 	beeper = kzalloc(sizeof(*beeper), GFP_KERNEL);
 	if (!beeper)
@@ -92,7 +96,7 @@ static int __devinit pwm_beeper_probe(struct platform_device *pdev)
 	beeper->input->dev.parent = &pdev->dev;
 
 	beeper->input->name = "pwm-beeper";
-	beeper->input->phys = "pwm/input0";
+	beeper->input->phys = "pwm/input1";
 	beeper->input->id.bustype = BUS_HOST;
 	beeper->input->id.vendor = 0x001f;
 	beeper->input->id.product = 0x0001;
@@ -128,6 +132,7 @@ err_free:
 static int __devexit pwm_beeper_remove(struct platform_device *pdev)
 {
 	struct pwm_beeper *beeper = platform_get_drvdata(pdev);
+    printk(KERN_INFO "%s()\n", __func__);
 
 	platform_set_drvdata(pdev, NULL);
 	input_unregister_device(beeper->input);
@@ -144,6 +149,7 @@ static int __devexit pwm_beeper_remove(struct platform_device *pdev)
 static int pwm_beeper_suspend(struct device *dev)
 {
 	struct pwm_beeper *beeper = dev_get_drvdata(dev);
+    printk(KERN_INFO "%s()\n", __func__);
 
 	if (beeper->period)
 		pwm_disable(beeper->pwm);
@@ -154,6 +160,7 @@ static int pwm_beeper_suspend(struct device *dev)
 static int pwm_beeper_resume(struct device *dev)
 {
 	struct pwm_beeper *beeper = dev_get_drvdata(dev);
+    printk(KERN_INFO "%s()\n", __func__);
 
 	if (beeper->period) {
 		pwm_config(beeper->pwm, beeper->period / 2, beeper->period);
@@ -183,12 +190,15 @@ static struct platform_driver pwm_beeper_driver = {
 
 static int __init pwm_beeper_init(void)
 {
+    printk(KERN_INFO "%s()\n", __func__);
 	return platform_driver_register(&pwm_beeper_driver);
 }
 module_init(pwm_beeper_init);
 
 static void __exit pwm_beeper_exit(void)
 {
+    printk(KERN_INFO "%s()\n", __func__);
+
 	platform_driver_unregister(&pwm_beeper_driver);
 }
 module_exit(pwm_beeper_exit);

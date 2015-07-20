@@ -103,10 +103,12 @@ int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 		 * PERIOD value in PWMPR plus 2.
 		 */
 		writel(period_cycles - 2, pwm->mmio_base + MX3_PWMPR);
+#if 0
 		pr_info("%s: pwm freq = %ld, clk_select=%x clock_rate=%ld\n",
 				__func__,
 				clock_rate / (prescale * period_cycles),
 				pwm->clk_select, clock_rate);
+#endif
 		cr = MX3_PWMCR_PRESCALER(prescale) |
 			MX3_PWMCR_STOPEN | MX3_PWMCR_DOZEEN |
 			MX3_PWMCR_WAITEN | MX3_PWMCR_DBGEN;
