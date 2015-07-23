@@ -167,9 +167,11 @@
 #undef CONFIG_SND_SOC_SGTL5000
 
 /* LKD GPIO definitions */
+#define GP_BEEPER_EN_N            IMX_GPIO_NR(1,  0)
 #define GP_BT_POWER               IMX_GPIO_NR(7,  5)
 #define GP_CAP_TCH_INT1	          IMX_GPIO_NR(2, 21)
 #define GP_ECSPI2_CS_EEPROM       IMX_GPIO_NR(2, 26)
+#define GP_ECSPI2_CS_TEMP_SENSOR  IMX_GPIO_NR(2, 27)
 #define GP_ECSPI4_CS_SPINOR       IMX_GPIO_NR(3, 24)
 #define GP_ECSPI5_CS_DISPLAY      IMX_GPIO_NR(1, 19)
 #define GP_ENET_PHY_INT	          IMX_GPIO_NR(1, 28)
@@ -463,6 +465,7 @@ static struct fec_platform_data fec_data __initdata = {
 #ifdef SNACKERS_BOARD
 static int ecspi2_cs[] = {
 	GP_ECSPI2_CS_EEPROM,
+	GP_ECSPI2_CS_TEMP_SENSOR,
 };
 
 static const struct spi_imx_master ecspi2_data __initconst = {
@@ -589,12 +592,18 @@ static struct spi_board_info spi_gs2971_device[] __initdata = {
 
 #ifdef SNACKERS_BOARD
 
-static struct spi_board_info spi_eeprom_device[] __initdata = {
+static struct spi_board_info ecspi2_devices[] __initdata = {
 	{
 		.modalias = "spidev",
 		.max_speed_hz = 10000000, /* max spi clock (SCK) speed in HZ */
 		.bus_num = 1,
 		.chip_select = 0,
+	},
+	{
+		.modalias = "spidev",
+		.max_speed_hz = 20000000, /* max spi clock (SCK) speed in HZ */
+		.bus_num = 1,
+		.chip_select = 1,
 	},
 };
 
@@ -605,14 +614,15 @@ static void spi_device_init(void)
 	spi_register_board_info(spi_nor_device,
 				ARRAY_SIZE(spi_nor_device));
 #ifdef SNACKERS_BOARD
-	spi_register_board_info(spi_eeprom_device,
-				ARRAY_SIZE(spi_eeprom_device));
+	spi_register_board_info(ecspi2_devices,
+				ARRAY_SIZE(ecspi2_devices));
 #endif
 #if defined(CONFIG_MXC_VIDEO_GS2971) || defined(CONFIG_MXC_VIDEO_GS2971_MODULE)
 	spi_register_board_info(spi_gs2971_device, ARRAY_SIZE(spi_gs2971_device));
 #endif
 }
 
+#ifndef SNACKERS_BOARD
 static struct mxc_audio_platform_data audio_data;
 
 static int sgtl5000_init(void)
@@ -659,12 +669,30 @@ static struct mxc_audio_platform_data audio_data = {
 static struct platform_device audio_device = {
 	.name = "imx-sgtl5000",
 };
+#endif /* #ifndef SNACKERS_BOARD */
+
 
 static struct imxi2c_platform_data i2c_data = {
 	.bitrate = 100000,
 };
 
-#ifndef SNACKERS_BOARD
+
+#ifdef SNACKERS_BOARD
+
+static struct imxi2c_platform_data i2c0_data = {
+	.bitrate = 10000,
+};
+
+static struct i2c_board_info mxc_i2c0_board_info[] __initdata = {
+	{
+		I2C_BOARD_INFO("bq27541", 0x55), /* Battery Gauge */
+	},
+	{
+		I2C_BOARD_INFO("ltc4151", 0x6C), /* PoE Voltage Sensor */
+	},
+};
+
+#else
 static struct i2c_board_info mxc_i2c0_board_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("sgtl5000", 0x0a),
@@ -1294,10 +1322,12 @@ static struct viv_gpu_platform_data imx6_gpu_pdata __initdata = {
 	.reserved_mem_size = SZ_128M,
 };
 
+#ifndef SNACKERS_BOARD
 static struct imx_asrc_platform_data imx_asrc_data = {
 	.channel_bits = 4,
 	.clk_map_ver = 2,
 };
+#endif
 
 static struct ipuv3_fb_platform_data fb_data[] = {
 	{ /*fb0*/
@@ -1685,6 +1715,7 @@ static struct platform_device sgtl5000_vddd_reg_devices = {
 
 #endif /* CONFIG_SND_SOC_SGTL5000 */
 
+#ifndef SNACKERS_BOARD
 static int imx6_init_audio(void)
 {
 	mxc_register_device(&audio_device,
@@ -1702,6 +1733,7 @@ static int imx6_init_audio(void)
 #endif
 	return 0;
 }
+#endif
 
 /* PWM1_PWMO: backlight control on DRGB connector */
 static struct platform_pwm_backlight_data pwm1_backlight_data = {
@@ -1715,6 +1747,20 @@ static struct platform_pwm_backlight_data pwm1_backlight_data = {
 #endif
 	.pwm_period_ns = 1000000000/32768,
 };
+
+#ifdef SNACKERS_BOARD
+#define BEEPER_PWM_ID 2
+/* PWM3_PWMO: beeper */
+static struct platform_device beeper_device = {
+	.name	= "pwm-beeper",
+	.id   	= -1,  /* only 1 device */
+	.dev	= {
+		.platform_data = (void*)BEEPER_PWM_ID,
+	},
+};
+
+
+#endif
 
 #ifndef SNACKERS_BOARD /* Not in Snackers */
 static struct mxc_pwm_platform_data pwm3_data = {
@@ -1786,10 +1832,12 @@ static const struct imx_pcie_platform_data pcie_data  __initconst = {
 
 struct gpio initial_gpios[] __initdata = {
 #ifdef SNACKERS_BOARD
+
 /********************************************************/
 	{.label = "kill_power",	        .gpio = GP_KILL_POWER,	           .flags = 0},           /* Deassert kill_power */
 	{.label = "sys_reset",	        .gpio = GP_SYS_RESET_B,	           .flags = GPIOF_HIGH},  /* Deassert sys_reset */
 	{.label = "backlight_enable",   .gpio = GP_BACKLIGHT_ENABLE,       .flags = GPIOF_HIGH},  /* Assert backlight_enable */
+	{.label = "beeper_enable",      .gpio = GP_BEEPER_EN_N,            .flags = GPIOF_HIGH},  /* Deassert beeper_enable */
 	{.label = "bt_power",	        .gpio = GP_BT_POWER,	           .flags = 0},           /* Deassert bt_power */
 	{.label = "pcap_shutdown",	    .gpio = GP_PCAP_SHUTDOWN,	       .flags = GPIOF_HIGH},  /* Deassert pcap_shutdown */
     {.label = "pcie_shutdown",	    .gpio = GP_PCIE_SLOT1_SHDN_N,	   .flags = GPIOF_HIGH},  /* Deassert pcie_shutdown */
@@ -1860,6 +1908,10 @@ static void __init board_init(void)
 		printk(KERN_ERR "%s gpio_request_array failed("
 			"%d) for initial_gpios\n", __func__, ret);
 
+    // Free GPIOs after initialization so that they can be accessed via sysfs in user space
+    gpio_free(GP_BEEPER_EN_N);
+    gpio_free(GP_KILL_POWER);
+
 	IOMUX_SETUP(snackers_pads);
     lcd_disable_pins();
 
@@ -1881,16 +1933,19 @@ static void __init board_init(void)
 	imx6q_add_lcdif(&lcdif_data);
 	imx6q_add_imx_snvs_rtc();
 
+    imx6q_add_imx_i2c(0, &i2c0_data);
     imx6q_add_imx_i2c(1, &i2c_data);
 	imx6q_add_imx_i2c(2, &i2c_data);
 
+	i2c_register_board_info(0, mxc_i2c0_board_info,
+			ARRAY_SIZE(mxc_i2c0_board_info));
 	i2c_register_board_info(1, mxc_i2c1_board_info,
 			ARRAY_SIZE(mxc_i2c1_board_info));
 	i2c_register_board_info(2, mxc_i2c2_board_info,
 			ARRAY_SIZE(mxc_i2c2_board_info));
 
 	/* SPI */
-	imx6q_add_ecspi(1, &ecspi2_data); /* EEPROM */
+	imx6q_add_ecspi(1, &ecspi2_data); /* EEPROM, Temp Sensor */
 	imx6q_add_ecspi(3, &ecspi4_data); /* SPI Nor Flash */
 	imx6q_add_ecspi(4, &ecspi5_data); /* LCD */
 	spi_device_init();
@@ -1915,6 +1970,7 @@ static void __init board_init(void)
     IOMUX_SETUP(snackers_i2c_pads);
 
 	imx6q_add_mxc_pwm(0);
+	imx6q_add_mxc_pwm(2); // beeper
 	imx6q_add_mxc_pwm_backlight(0, &pwm1_backlight_data);
 
 	imx6q_add_otp();
@@ -1948,6 +2004,8 @@ static void __init board_init(void)
 	imx6q_add_perfmon(0);
 	imx6q_add_perfmon(1);
 	imx6q_add_perfmon(2);
+
+    platform_device_register(&beeper_device);
 }
 /**************************************************************************************/
 #else

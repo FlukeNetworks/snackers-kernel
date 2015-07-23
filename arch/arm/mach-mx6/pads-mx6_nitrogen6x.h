@@ -114,6 +114,7 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(EIM_CS1__ECSPI2_MOSI),
 	MX6PAD(EIM_CS0__ECSPI2_SCLK),
 	MX6PAD(EIM_RW__GPIO_2_26),	/*SS0 EEPROM */
+	MX6PAD(EIM_LBA__GPIO_2_27),	/*SS1 Temp Sensor */
 
   	/* ECSPI4 */
 	MX6PAD(EIM_D22__ECSPI4_MISO),
@@ -151,6 +152,7 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 
 	/* GPIOs - Sorted by schematic signal name */
 	MX6PAD(SD2_CMD__GPIO_1_11),         /* BACKLIGHT_ENABLE*/
+	MX6PAD(GPIO_0__GPIO_1_0),           /* BEEPER_EN_B */
 	MX6PAD(SD3_DAT1__GPIO_7_5),         /* BT_POWER */
 	MX6PAD(SD3_DAT0__GPIO_7_4),         /* BT_RESET_N */
 	MX6PAD(EIM_LBA__GPIO_2_27),         /* EE_WP_B */
@@ -172,17 +174,19 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(EIM_A23__GPIO_6_6),		    /* PCIE_SLOT1_STDBY_N */
 	MX6PAD(EIM_A24__GPIO_5_4),		    /* PCIE_SLOT1_SYS_RESET_N */
 	MX6PAD(ENET_CRS_DV__GPIO_1_25),	    /* PHY_RESET_B */
-	MX6PAD(CSI0_DAT16__GPIO_6_2),	    /* POE_CLASS1 */
-	MX6PAD(CSI0_DAT17__GPIO_6_3),	    /* POE_CLASS4 */
 	MX6PAD(CSI0_DAT15__GPIO_6_1),	    /* POE_ENABLE */
 	MX6PAD(CSI0_DAT14__GPIO_6_0),	    /* POE_GOOD */
-	MX6PAD(CSI0_DAT13__GPIO_5_31),	    /* POE_TP2 */
+	MX6PAD(CSI0_DAT18__GPIO_6_4),	    /* POE_RCLS1 */
+	MX6PAD(CSI0_DAT19__GPIO_6_5),	    /* POE_RCLS2 */
+	MX6PAD(CSI0_DAT16__GPIO_6_2),	    /* POE_RCLSPP1 */
+	MX6PAD(CSI0_DAT17__GPIO_6_3),	    /* POE_RCLSPP2 */
+	MX6PAD(CSI0_DAT13__GPIO_5_31),	    /* POE_T2P */
     MX6PAD(EIM_D29__GPIO_3_29),		    /* PWR_BTN_SNSE */
 	MX6PAD(EIM_D27__GPIO_3_27),		    /* PWR_SW_B */
 	MX6PAD(KEY_ROW2__GPIO_4_11),	    /* RUN_SELFTEST_B */
 	MX6PAD(KEY_COL2__GPIO_4_10),	    /* SPI_NOR_WP */
 	MX6PAD(EIM_D19__GPIO_3_19),	        /* SYS_RESET_B */
-	MX6PAD(EIM_D17__GPIO_3_17),	    /* USB Hub CFG_SEL0 */
+	MX6PAD(EIM_D17__GPIO_3_17),	        /* USB Hub CFG_SEL0 */
 	MX6PAD(CSI0_DAT11__GPIO_5_29),	    /* USB Hub CFG_SEL1 */
 	MX6PAD(CSI0_DAT10__GPIO_5_28),	    /* USB Hub Reset */
 	MX6PAD(CSI0_DAT12__GPIO_5_30),	    /* USB Hub SUSP_IND/LOCAL_PWR */
@@ -201,7 +205,8 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	/* PWM1 - Backlight */
 	MX6PAD(SD1_DAT3__PWM1_PWMO),		/* GPIO1[21] */
 
-	/* PWM? - Beeper TBD */
+	/* PWM3 - Beeper */
+	MX6PAD(SD1_DAT1__PWM3_PWMO),		/* GPIO1[17] */
 
 	/* UART2 for debug */
 	MX6PAD(GPIO_7__UART2_TXD),
@@ -223,13 +228,13 @@ static iomux_v3_cfg_t MX6NAME(snackers_i2c_pads)[] = {
 	MX6PAD(CSI0_DAT9__I2C1_SCL),	    /* GPIO5[27] */
 	MX6PAD(CSI0_DAT8__I2C1_SDA),	    /* GPIO5[26] */
 
-    /* I2C2: MFI, USB Hub */
+    /* I2C2: MFI */
 	MX6PAD(KEY_COL3__I2C2_SCL),	        /* GPIO4[12] */
 	MX6PAD(KEY_ROW3__I2C2_SDA),	        /* GPIO4[13] */
 
-    /* I2C3: Battery Charger, Touch Panel */
+    /* I2C3: Battery Charger, Touch Panel, USB Hub */
 	MX6PAD(EIM_D17__I2C3_SCL),	        /* GPIO3[17] */
-	MX6PAD(EIM_D18__I2C3_SDA),	        /* GPIO3[18] */
+	MX6PAD(GPIO_16__I2C3_SDA),	        /* GPIO7[11] */
     0
 };
 
