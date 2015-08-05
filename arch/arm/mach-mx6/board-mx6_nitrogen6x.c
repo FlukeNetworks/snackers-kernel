@@ -168,7 +168,11 @@
 
 /* LKD GPIO definitions */
 #define GP_BEEPER_EN_N            IMX_GPIO_NR(1,  0)
-#define GP_BT_POWER               IMX_GPIO_NR(7,  5)
+#define GP_BT_OP3                 IMX_GPIO_NR(7,  6)
+#define GP_BT_OP4                 IMX_GPIO_NR(7,  7)
+#define GP_BT_OP5                 IMX_GPIO_NR(7,  1)
+#define GP_BT_POWER               IMX_GPIO_NR(1,  2)
+#define GP_BT_RESET               IMX_GPIO_NR(1,  3)
 #define GP_CAP_TCH_INT1	          IMX_GPIO_NR(2, 21)
 #define GP_ECSPI2_CS_EEPROM       IMX_GPIO_NR(2, 26)
 #define GP_ECSPI2_CS_TEMP_SENSOR  IMX_GPIO_NR(2, 27)
@@ -350,6 +354,14 @@ static const struct anatop_thermal_platform_data
 		.name = "anatop_thermal",
 };
 
+#ifdef SNACKERS_BOARD
+
+static const struct imxuart_platform_data uart0_for_bluetooth __initconst = {
+	.flags      = IMXUART_HAVE_RTSCTS,
+};
+
+#else
+
 static const struct imxuart_platform_data mx6_arm2_uart2_data __initconst = {
 	.flags      = IMXUART_HAVE_RTSCTS,
 };
@@ -363,6 +375,7 @@ static const struct imxuart_platform_data mx6_arm2_uart4_data __initconst = {
 	.flags      = IMXUART_HAVE_RTSCTS,
 };
 #endif
+#endif /* #ifdef SNACKERS_BOARD */
 
 static unsigned short ksz9031_por_cmds[] = {
 	0x0204, 0x0,		/* RX_CTL/TX_CTL output pad skew */
@@ -685,6 +698,9 @@ static struct imxi2c_platform_data i2c0_data = {
 
 static struct i2c_board_info mxc_i2c0_board_info[] __initdata = {
 	{
+		I2C_BOARD_INFO("pmic", 0x08),    /* PMIC - to enable power off */
+	},
+    {
 		I2C_BOARD_INFO("bq27541", 0x55), /* Battery Gauge */
 	},
 	{
@@ -1838,8 +1854,12 @@ struct gpio initial_gpios[] __initdata = {
 	{.label = "sys_reset",	        .gpio = GP_SYS_RESET_B,	           .flags = GPIOF_HIGH},  /* Deassert sys_reset */
 	{.label = "backlight_enable",   .gpio = GP_BACKLIGHT_ENABLE,       .flags = GPIOF_HIGH},  /* Assert backlight_enable */
 	{.label = "beeper_enable",      .gpio = GP_BEEPER_EN_N,            .flags = GPIOF_HIGH},  /* Deassert beeper_enable */
+	{.label = "bt_op3",  	        .gpio = GP_BT_OP3,	               .flags = GPIOF_HIGH},           
+	{.label = "bt_op4",  	        .gpio = GP_BT_OP4,	               .flags = 0},           
+	{.label = "bt_op5",  	        .gpio = GP_BT_OP5,	               .flags = 0},           
 	{.label = "bt_power",	        .gpio = GP_BT_POWER,	           .flags = 0},           /* Deassert bt_power */
-	{.label = "pcap_shutdown",	    .gpio = GP_PCAP_SHUTDOWN,	       .flags = GPIOF_HIGH},  /* Deassert pcap_shutdown */
+	{.label = "bt_reset",	        .gpio = GP_BT_RESET,	           .flags = 0},           /* Deassert bt_reset */
+	{.label = "pcap_shutdown",	    .gpio = GP_PCAP_SHUTDOWN,	       .flags = 0},           /* Deassert pcap_shutdown */
     {.label = "pcie_shutdown",	    .gpio = GP_PCIE_SLOT1_SHDN_N,	   .flags = GPIOF_HIGH},  /* Deassert pcie_shutdown */
 	{.label = "pcie_standby",	    .gpio = GP_PCIE_SLOT1_STDBY_N,	   .flags = GPIOF_HIGH},  /* Deassert pcie_standby */
 	{.label = "pcie_reset", 	    .gpio = GP_PCIE_SLOT1_SYS_RESET_N, .flags = 0},           /* Assert pcie_reset */
@@ -1889,6 +1909,11 @@ static void poweroff(void)
 	}
 	arch_reset('h',"");
 #endif
+
+#ifdef SNACKERS_BOARD
+	gpio_set_value(GP_KILL_POWER, 1);
+#endif
+
 }
 
 /*!
@@ -1910,6 +1935,8 @@ static void __init board_init(void)
 
     // Free GPIOs after initialization so that they can be accessed via sysfs in user space
     gpio_free(GP_BEEPER_EN_N);
+    gpio_free(GP_BT_POWER);
+    gpio_free(GP_BT_RESET);
     gpio_free(GP_KILL_POWER);
 
 	IOMUX_SETUP(snackers_pads);
@@ -1919,6 +1946,7 @@ static void __init board_init(void)
 	soc_reg_id = dvfscore_data.soc_id;
 	pu_reg_id = dvfscore_data.pu_id;
 
+    imx6q_add_imx_uart(0, &uart0_for_bluetooth);
 	imx6q_add_imx_uart(1, NULL);
 
 	imx6q_add_ipuv3(0, &ipu_data[0]);
@@ -1941,6 +1969,10 @@ static void __init board_init(void)
 			ARRAY_SIZE(mxc_i2c0_board_info));
 	i2c_register_board_info(1, mxc_i2c1_board_info,
 			ARRAY_SIZE(mxc_i2c1_board_info));
+
+    /* Deassert PCAP_SHUTDOWN */
+	gpio_set_value(GP_PCAP_SHUTDOWN, 1);
+
 	i2c_register_board_info(2, mxc_i2c2_board_info,
 			ARRAY_SIZE(mxc_i2c2_board_info));
 
