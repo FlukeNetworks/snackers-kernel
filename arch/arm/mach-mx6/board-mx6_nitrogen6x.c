@@ -1934,6 +1934,7 @@ static void __init board_init(void)
 			"%d) for initial_gpios\n", __func__, ret);
 
     // Free GPIOs after initialization so that they can be accessed via sysfs in user space
+    gpio_free(GP_BACKLIGHT_ENABLE);
     gpio_free(GP_BEEPER_EN_N);
     gpio_free(GP_BT_POWER);
     gpio_free(GP_BT_RESET);
