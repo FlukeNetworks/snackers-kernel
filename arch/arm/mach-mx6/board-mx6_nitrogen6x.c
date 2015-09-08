@@ -1854,9 +1854,9 @@ struct gpio initial_gpios[] __initdata = {
 	{.label = "sys_reset",	        .gpio = GP_SYS_RESET_B,	           .flags = GPIOF_HIGH},  /* Deassert sys_reset */
 	{.label = "backlight_enable",   .gpio = GP_BACKLIGHT_ENABLE,       .flags = GPIOF_HIGH},  /* Assert backlight_enable */
 	{.label = "beeper_enable",      .gpio = GP_BEEPER_EN_N,            .flags = GPIOF_HIGH},  /* Deassert beeper_enable */
-	{.label = "bt_op3",  	        .gpio = GP_BT_OP3,	               .flags = GPIOF_HIGH},           
-	{.label = "bt_op4",  	        .gpio = GP_BT_OP4,	               .flags = 0},           
-	{.label = "bt_op5",  	        .gpio = GP_BT_OP5,	               .flags = 0},           
+	{.label = "bt_op3",  	        .gpio = GP_BT_OP3,	               .flags = GPIOF_HIGH},  /* OP3, OP4 and OP5 are */         
+	{.label = "bt_op4",  	        .gpio = GP_BT_OP4,	               .flags = GPIOF_HIGH},  /* for configuring the  */
+	{.label = "bt_op5",  	        .gpio = GP_BT_OP5,	               .flags = 0},           /* BT UART speed. Set to 115200. */         
 	{.label = "bt_power",	        .gpio = GP_BT_POWER,	           .flags = 0},           /* Deassert bt_power */
 	{.label = "bt_reset",	        .gpio = GP_BT_RESET,	           .flags = 0},           /* Deassert bt_reset */
 	{.label = "pcap_shutdown",	    .gpio = GP_PCAP_SHUTDOWN,	       .flags = 0},           /* Deassert pcap_shutdown */
@@ -2039,6 +2039,9 @@ static void __init board_init(void)
 	imx6q_add_perfmon(2);
 
     platform_device_register(&beeper_device);
+
+    printk("SD3_DAT1_CTL=0x%08X\n", __raw_readl(IO_ADDRESS(0x20E06AC)));
+
 }
 /**************************************************************************************/
 #else

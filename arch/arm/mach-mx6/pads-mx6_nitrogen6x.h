@@ -220,7 +220,7 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(SD3_DAT7__UART1_TXD),
 	MX6PAD(SD3_DAT6__UART1_RXD),
 	MX6PAD(SD3_DAT0__UART1_CTS),
-	MX6PAD(SD3_DAT1__UART1_RTS),
+	MX6PAD(SD3_DAT1__GPIO_7_5),  /* Define RTS as GPIO to make it work.  TODO: Needs investigation. */
 
 	/* UART2 for debug */
 	MX6PAD(GPIO_7__UART2_TXD),
