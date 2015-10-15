@@ -1755,8 +1755,8 @@ static int imx6_init_audio(void)
 static struct platform_pwm_backlight_data pwm1_backlight_data = {
 	.pwm_id = 0,	/* pin SD1_DATA3 - PWM1 */
 #ifdef SNACKERS_BOARD
-	.max_brightness = 1,
-	.dft_brightness = 128,
+	.max_brightness = 256,
+	.dft_brightness = 170,
 #else
 	.max_brightness = 256,
 	.dft_brightness = 256,
