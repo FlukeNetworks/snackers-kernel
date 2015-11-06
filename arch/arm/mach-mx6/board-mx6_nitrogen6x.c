@@ -194,6 +194,8 @@
 #define GP_USB_HUB_CFG_SEL1       IMX_GPIO_NR(5, 29)
 #define GP_USB_HUB_RESET          IMX_GPIO_NR(5, 28)
 #define GP_USB_HUB_LOCAL_PWR      IMX_GPIO_NR(5, 30)
+#define GP_EXT_ANT_PRESENT        IMX_GPIO_NR(4, 5)
+#define GP_WIFI_V1                IMX_GPIO_NR(3, 16)
 
 #endif  /* SNACKERS_BOARD */
 /*************************************************************/
@@ -1867,6 +1869,10 @@ struct gpio initial_gpios[] __initdata = {
 	{.label = "usb_local_pwr",	    .gpio = GP_USB_HUB_LOCAL_PWR,	   .flags = 0},           /* Assert usb_local_pwr */
 	{.label = "usb_hub_cfg_sel0",	.gpio = GP_USB_HUB_CFG_SEL0,	   .flags = 0},           /* default USB Hub cfg */
 	{.label = "usb_hub_cfg_sel1",	.gpio = GP_USB_HUB_CFG_SEL1,	   .flags = 0},           /* default USB Hub cfg */
+    {.label = "ext_antenna_present",.gpio = GP_EXT_ANT_PRESENT,        .flags = GPIOF_HIGH},
+    {.label = "wifi_v1_switch",     .gpio = GP_WIFI_V1,                .flags = GPIOF_HIGH},
+    gpio_free(GP_EXT_ANT_PRESENT);
+    gpio_free(GP_WIFI_V1);
 /********************************************************/
 #else /* ORIGINAL CODE */
 	{.label = "ov5642_csi0_pwdn",	.gpio = GP_CSI0_PWN,	.flags = GPIOF_HIGH},
@@ -1939,6 +1945,8 @@ static void __init board_init(void)
     gpio_free(GP_BT_POWER);
     gpio_free(GP_BT_RESET);
     gpio_free(GP_KILL_POWER);
+    gpio_free(GP_EXT_ANT_PRESENT);
+    gpio_free(GP_WIFI_V1);
 
 	IOMUX_SETUP(snackers_pads);
     lcd_disable_pins();
