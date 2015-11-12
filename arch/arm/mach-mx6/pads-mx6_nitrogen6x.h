@@ -154,15 +154,17 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(ENET_TX_EN__GPIO_1_28),		/* Micrel RGMII Phy Interrupt */
     MX6PAD(ENET_CRS_DV__GPIO_1_25),  /* Phy reset */
 
-	/* GPIOs - Sorted by schematic signal name */
+    // GPIOs
 	MX6PAD(SD2_CMD__GPIO_1_11),         /* BACKLIGHT_ENABLE*/
 	MX6PAD(GPIO_0__GPIO_1_0),           /* BEEPER_EN_B */
+
 	MX6PAD(SD3_DAT2__GPIO_7_6),         /* BT_OP3 */
 	MX6PAD(SD3_DAT3__GPIO_7_7),         /* BT_OP4 */
 	MX6PAD(SD3_DAT4__GPIO_7_1),         /* BT_OP5 */
 	MX6PAD(SD3_DAT5__GPIO_7_0),         /* BT_OP6 */
-	MX6PAD(GPIO_2__GPIO_1_2),           /* BT_POWER */
-	MX6PAD(GPIO_3__GPIO_1_3),           /* BT_RESET_N */
+	MX6PAD(SD3_CLK__GPIO_7_3),           /* BT_POWER */
+	MX6PAD(SD3_CMD__GPIO_7_2),           /* BT_RESET_N */
+
 	MX6PAD(GPIO_6__GPIO_1_6),           /* EE_WP_B */
 	MX6PAD(NANDF_ALE__GPIO_6_8),        /* EMMC_RST_B */
 	MX6PAD(GPIO_19__GPIO_4_5),          /* EXT_ANT_PRESENT */
@@ -200,6 +202,8 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	MX6PAD(CSI0_DAT12__GPIO_5_30),	    /* USB Hub SUSP_IND/LOCAL_PWR */
 	MX6PAD(KEY_ROW4__GPIO_4_15),        /* USB_OTG_PWR_EN */
 	MX6PAD(EIM_D16__GPIO_3_16),         /* WIFI_V1 - switch antenna */
+	MX6PAD(NANDF_D0__GPIO_2_0),         /* ENABLE_ACCEL - accelerator power enable */
+	MX6PAD(NANDF_D1__GPIO_2_1),         /* ACCEL_INT - accelerator interrupt */
 
 	/* DISPLAY */
 #if 0

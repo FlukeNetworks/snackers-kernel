@@ -171,8 +171,8 @@
 #define GP_BT_OP3                 IMX_GPIO_NR(7,  6)
 #define GP_BT_OP4                 IMX_GPIO_NR(7,  7)
 #define GP_BT_OP5                 IMX_GPIO_NR(7,  1)
-#define GP_BT_POWER               IMX_GPIO_NR(1,  2)
-#define GP_BT_RESET               IMX_GPIO_NR(1,  3)
+#define GP_BT_POWER               IMX_GPIO_NR(7,  3)
+#define GP_BT_RESET               IMX_GPIO_NR(7,  2)
 #define GP_CAP_TCH_INT1	          IMX_GPIO_NR(2, 21)
 #define GP_ECSPI2_CS_EEPROM       IMX_GPIO_NR(2, 26)
 #define GP_ECSPI2_CS_TEMP_SENSOR  IMX_GPIO_NR(2, 27)
@@ -196,6 +196,8 @@
 #define GP_USB_HUB_LOCAL_PWR      IMX_GPIO_NR(5, 30)
 #define GP_EXT_ANT_PRESENT        IMX_GPIO_NR(4, 5)
 #define GP_WIFI_V1                IMX_GPIO_NR(3, 16)
+#define GP_ENABLE_ACCEL           IMX_GPIO_NR(2, 0)
+#define GP_ACCEL_INT              IMX_GPIO_NR(2, 1)
 
 #endif  /* SNACKERS_BOARD */
 /*************************************************************/
@@ -1871,6 +1873,8 @@ struct gpio initial_gpios[] __initdata = {
 	{.label = "usb_hub_cfg_sel1",	.gpio = GP_USB_HUB_CFG_SEL1,	   .flags = 0},           /* default USB Hub cfg */
 	{.label = "ext_antenna_present",.gpio = GP_EXT_ANT_PRESENT,        .flags = GPIOF_HIGH},
 	{.label = "wifi_v1_switch",     .gpio = GP_WIFI_V1,                .flags = GPIOF_HIGH},
+	{.label = "enable_accel",       .gpio = GP_ENABLE_ACCEL,           .flags = GPIOF_HIGH},
+	{.label = "accel_int",          .gpio = GP_ACCEL_INT,              .flags = 0},
 /********************************************************/
 #else /* ORIGINAL CODE */
 	{.label = "ov5642_csi0_pwdn",	.gpio = GP_CSI0_PWN,	.flags = GPIOF_HIGH},
@@ -1945,6 +1949,8 @@ static void __init board_init(void)
     gpio_free(GP_KILL_POWER);
     gpio_free(GP_EXT_ANT_PRESENT);
     gpio_free(GP_WIFI_V1);
+    gpio_free(GP_ENABLE_ACCEL);
+    gpio_free(GP_ACCEL_INT);
 
 	IOMUX_SETUP(snackers_pads);
     lcd_disable_pins();
