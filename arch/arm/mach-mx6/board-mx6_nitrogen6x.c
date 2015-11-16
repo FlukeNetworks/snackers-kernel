@@ -180,6 +180,7 @@
 #define GP_ECSPI5_CS_DISPLAY      IMX_GPIO_NR(1, 19)
 #define GP_ENET_PHY_INT	          IMX_GPIO_NR(1, 28)
 #define GP_KILL_POWER             IMX_GPIO_NR(5, 22)
+#define GP_EXTERNAL_POWER_SENSE   IMX_GPIO_NR(5, 23)
 #define GP_PCAP_SHUTDOWN          IMX_GPIO_NR(2, 22)
 #define GP_PCIE_SLOT1_SHDN_N      IMX_GPIO_NR(2, 16)
 #define GP_PCIE_SLOT1_STDBY_N     IMX_GPIO_NR(6,  6)
@@ -1855,6 +1856,7 @@ struct gpio initial_gpios[] __initdata = {
 
 /********************************************************/
 	{.label = "kill_power",	        .gpio = GP_KILL_POWER,	           .flags = 0},           /* Deassert kill_power */
+	{.label = "external_power_sense", .gpio = GP_EXTERNAL_POWER_SENSE, .flags = GPIOF_HIGH},  /* Deassert kill_power */
 	{.label = "sys_reset",	        .gpio = GP_SYS_RESET_B,	           .flags = GPIOF_HIGH},  /* Deassert sys_reset */
 	{.label = "backlight_enable",   .gpio = GP_BACKLIGHT_ENABLE,       .flags = GPIOF_HIGH},  /* Assert backlight_enable */
 	{.label = "beeper_enable",      .gpio = GP_BEEPER_EN_N,            .flags = GPIOF_HIGH},  /* Deassert beeper_enable */
@@ -1947,6 +1949,7 @@ static void __init board_init(void)
     gpio_free(GP_BT_POWER);
     gpio_free(GP_BT_RESET);
     gpio_free(GP_KILL_POWER);
+    gpio_free(GP_EXTERNAL_POWER_SENSE);
     gpio_free(GP_EXT_ANT_PRESENT);
     gpio_free(GP_WIFI_V1);
     gpio_free(GP_ENABLE_ACCEL);
