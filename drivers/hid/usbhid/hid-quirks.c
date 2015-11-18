@@ -23,7 +23,7 @@
 #ifdef CONFIG_IAP_HID
 /* ALLGO: Added IPOD devices */
 #define USB_VENDOR_ID_IPOD       0x05AC
-#define USB_PRODUCT_ID_IPOD      0x12FF
+#define USB_PRODUCT_ID_IPOD      0x12ab
 #endif
 
 /*
