@@ -223,8 +223,13 @@ static iomux_v3_cfg_t MX6NAME(snackers_pads)[] = {
 	/* UART1 for Bluetooth */
 	MX6PAD(SD3_DAT7__UART1_TXD),
 	MX6PAD(SD3_DAT6__UART1_RXD),
-	MX6PAD(SD3_DAT0__UART1_CTS),
-	MX6PAD(SD3_DAT1__GPIO_7_5),  /* Define RTS as GPIO to make it work.  TODO: Needs investigation. */
+
+	// Define Bluetooth UART CTS and RTS as GPIO to effectively disable them.
+	// These pins are swapped on the PCB, which has led to subtle problems on
+	// some boards where the Bluetooth chip refused to talk to the iMX6 chip.
+	// disabling these pins prevents this from happening.
+	MX6PAD(SD3_DAT0__GPIO_7_4),
+	MX6PAD(SD3_DAT1__GPIO_7_5),
 
 	/* UART2 for debug */
 	MX6PAD(GPIO_7__UART2_TXD),
