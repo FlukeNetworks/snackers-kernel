@@ -27,6 +27,26 @@ struct mxc_lcdif_data {
 #define DISPDRV_LCD	"lcd"
 
 static struct fb_videomode lcdif_modedb[] = {
+        {
+        /* 480x854 @ 60 Hz , pixel clk @ 27MHz */
+        /* default when no resolution specified on cmdline */
+        "NVD_HSD050", 60, 480, 854, 1000000000/516 * 1000 /890/60,
+        .left_margin    = 18, .right_margin     = 16,
+        .upper_margin   = 18, .lower_margin     = 16,
+        .hsync_len      = 2,  .vsync_len        = 2,
+        .sync           = 0,
+        .vmode          = FB_VMODE_NONINTERLACED,
+        .flag           = 0,
+        },
+	{
+	/* 480x800 @ 60 Hz , pixel clk @ 27MHz */
+	"AUO_G050", 60, 480, 800, 1000000000/516 * 1000 /836/60,
+	.left_margin = 18, .right_margin = 16,
+	.upper_margin = 18, .lower_margin = 16,
+	.hsync_len = 2, .vsync_len = 2,
+	.sync = 0,
+	.vmode = FB_VMODE_NONINTERLACED,
+	.flag = 0,},
 	{
 	/* 800x480 @ 57 Hz , pixel clk @ 27MHz */
 	"CLAA-WVGA", 57, 800, 480, 37037, 40, 60, 10, 10, 20, 10,
@@ -82,15 +102,6 @@ static struct fb_videomode lcdif_modedb[] = {
 	.vmode = FB_VMODE_NONINTERLACED,
 	.flag = 0,},
 	{
-	/* 480x800 @ 60 Hz , pixel clk @ 27MHz */
-	"AUO_G050", 60, 480, 800, 1000000000/516 * 1000 /836/60,
-	.left_margin = 18, .right_margin = 16,
-	.upper_margin = 18, .lower_margin = 16,
-	.hsync_len = 2, .vsync_len = 2,
-	.sync = 0,
-	.vmode = FB_VMODE_NONINTERLACED,
-	.flag = 0,},
-	{
 	 /*
 	  * hitachi 640x240
 	  * vsync = 60
@@ -117,10 +128,17 @@ static int lcdif_init(struct mxc_dispdrv_handle *disp,
 	struct fb_videomode *modedb = lcdif_modedb;
 	int modedb_sz = lcdif_modedb_sz;
 
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> linux lcd_ifinit(): modedb_sz= %d\n", modedb_sz);
+#endif
+
 	/* use platform defined ipu/di */
 	setting->dev_id = plat_data->ipu_id;
 	setting->disp_id = plat_data->disp_id;
 
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> before fb_find_mode(): arg3= %s\n", setting->dft_mode_str);
+#endif
 	ret = fb_find_mode(&setting->fbi->var, setting->fbi, setting->dft_mode_str,
 				modedb, modedb_sz, NULL, setting->default_bpp);
 	if (!ret) {

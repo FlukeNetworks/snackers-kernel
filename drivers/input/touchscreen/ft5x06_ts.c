@@ -70,6 +70,21 @@ static void translate(int *px, int *py)
 		*px = x ;
 		*py = y ;
 	}
+#if 1 // KLL_MOD - invert x-axis for new display touch controller...
+  int ts_max_x = 480 - 1; // touchscreen max X value
+  int ts_max_y = 800 - 1; // touchscreen max Y value
+  int lcd_max_y = 854 - 1; // LCD display max Y value
+
+  // invert x value
+  *px = ts_max_x - *px; 
+  if ( *px > ts_max_x ) 
+    *px = ts_max_x;
+
+  // scale y value
+  *py = (*py * (lcd_max_y + 1)) / (ts_max_y + 1);
+  if ( *py > lcd_max_y ) 
+    *py = lcd_max_y;
+#endif
 }
 
 struct point {
@@ -501,6 +516,14 @@ static void ts_shutdown(struct ft5x06_ts *ts)
 /* Return 0 if detection is successful, -ENODEV otherwise */
 static int detect_ft5x06(struct i2c_client *client)
 {
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> detect_ft5x06(): before i2c_addr=%02x\n", client->addr);
+if (client->addr == 0x3a )
+{
+  client->addr = 0x38;
+}
+printk(KERN_ERR "KLL_DEBUG> detect_ft5x06(): after i2c_addr=%02x\n", client->addr);
+#endif
 	struct i2c_adapter *adapter = client->adapter;
 	char buffer;
 	struct i2c_msg pkt = {
@@ -520,6 +543,9 @@ static int detect_ft5x06(struct i2c_client *client)
 static int ts_detect(struct i2c_client *client,
 			  struct i2c_board_info *info)
 {
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> ts_detect(): i2c_addr=%02x\n", client->addr);
+#endif
 	int err = detect_ft5x06(client);
 	if (!err)
 		strlcpy(info->type, "ft5x06-ts", I2C_NAME_SIZE);

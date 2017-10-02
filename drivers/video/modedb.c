@@ -493,6 +493,9 @@ static int fb_try_mode(struct fb_var_screeninfo *var, struct fb_info *info,
 {
     int err = 0;
 
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> fb_try_mode(): trying res %dx%d \n", mode->xres, mode->yres);
+#endif
     DPRINTK("Trying mode %s %dx%d-%d@%d\n", mode->name ? mode->name : "noname",
 	    mode->xres, mode->yres, bpp, mode->refresh);
     var->xres = mode->xres;
@@ -515,6 +518,9 @@ static int fb_try_mode(struct fb_var_screeninfo *var, struct fb_info *info,
     if (info->fbops->fb_check_var)
     	err = info->fbops->fb_check_var(var, info);
     var->activate &= ~FB_ACTIVATE_TEST;
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> fb_try_mode(): return val= %d \n", err);
+#endif
     return err;
 }
 
@@ -579,6 +585,10 @@ int fb_find_mode(struct fb_var_screeninfo *var,
 
     if (!default_bpp)
 	default_bpp = 8;
+
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> fb_find_mode(): mode_option= %s\n", mode_option);
+#endif
 
     /* Did the user specify a video mode? */
     if (!mode_option)
@@ -701,6 +711,9 @@ done:
 	diff = -1;
 	best = -1;
 	for (i = 0; i < dbsize; i++) {
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> fb_find_mode(): name lookup -- db[%d]= %s\n", i, db[i].name);
+#endif
 		if ((name_matches(db[i], name, namelen) ||
 		    (res_specified && res_matches(db[i], xres, yres))) &&
 		    !fb_try_mode(var, info, &db[i], bpp)) {
@@ -714,8 +727,14 @@ done:
 			}
 		}
 	}
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> fb_find_mode(): best name db index=%d\n", best);
+#endif
 	if (best != -1) {
 		fb_try_mode(var, info, &db[best], bpp);
+#if 1 // KLL_MOD
+printk(KERN_ERR "KLL_DEBUG> fb_find_mode(): return val=%d (1=success)\n", (refresh_specified) ? 2 : 1);
+#endif
 		return (refresh_specified) ? 2 : 1;
 	}
 
