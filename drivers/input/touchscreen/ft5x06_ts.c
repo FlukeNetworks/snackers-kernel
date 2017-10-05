@@ -36,6 +36,7 @@
 #define USE_ABS_MT
 #endif
 
+//#define DEBUG_TOUCH_CAL
 extern int gNewDisplay;
 
 static int calibration[7] = {
@@ -52,46 +53,54 @@ module_param_array(screenres, int, NULL, S_IRUGO | S_IWUSR);
 
 static void translate(int *px, int *py)
 {
+	//printk(KERN_ERR "DEBUG> translate touch coordinate: gNewDisplay= %d\n", gNewDisplay);
+	if ( gNewDisplay ) // e.g. NVD_HSD050
+	{
+  		int ts_max_x = 480 - 1; // touchscreen max X value
+  		int ts_max_y = 800 - 1; // touchscreen max Y value
+  		int lcd_max_y = 854 - 1; // LCD display max Y value
+
+  		//printk(KERN_ERR "DEBUG> translate touch before x-invert: x=%d y=%d\n", *px, *py);
+
+		// invert x-axis for new display touch controller...
+  		*px = ts_max_x - *px; 
+  		if ( *px > ts_max_x ) 
+    		*px = ts_max_x;
+
+#if 0
+  		// ... and scale y value (assumes new touch controller resolutions are 480x800)
+  		*py = (*py * (lcd_max_y + 1)) / (ts_max_y + 1);
+  		if ( *py > lcd_max_y ) 
+    		*py = lcd_max_y;
+#endif
+
+		//printk(KERN_ERR "DEBUG> translate touch after x-invert: x=%d y=%d\n", *px, *py);
+	}
+
+	// apply touchscreen calibration factors
 	int x, y, x1, y1;
+#ifdef DEBUG_TOUCH_CAL
+	printk(KERN_ERR "DEBUG> translate touch calibration[6]= %d\n", calibration[6]);
+	printk(KERN_ERR "DEBUG> translate touch before x-invert: x=%d y=%d\n", *px, *py);
+#endif
 	if (calibration[6]) {
 		x1 = *px;
 		y1 = *py;
 
-		x = calibration[0] * x1 +
-			calibration[1] * y1 +
-			calibration[2];
+		x =  calibration[0] * x1 + calibration[1] * y1 + calibration[2];
 		x /= calibration[6];
 		if (x < 0)
 			x = 0;
-		y = calibration[3] * x1 +
-			calibration[4] * y1 +
-			calibration[5];
+		y =  calibration[3] * x1 + calibration[4] * y1 + calibration[5];
 		y /= calibration[6];
 		if (y < 0)
 			y = 0;
 		*px = x ;
 		*py = y ;
-	}
-
-#if 1 // KLL_MOD - invert x-axis for new display touch controller...
-//printk(KERN_ERR "KLL_DEBUG> translate touch coordinate: gNewDisplay= %d\n", gNewDisplay);
-if ( gNewDisplay )
-{
-  int ts_max_x = 480 - 1; // touchscreen max X value
-  int ts_max_y = 800 - 1; // touchscreen max Y value
-  int lcd_max_y = 854 - 1; // LCD display max Y value
-
-  // invert x value
-  *px = ts_max_x - *px; 
-  if ( *px > ts_max_x ) 
-    *px = ts_max_x;
-
-  // scale y value
-  *py = (*py * (lcd_max_y + 1)) / (ts_max_y + 1);
-  if ( *py > lcd_max_y ) 
-    *py = lcd_max_y;
-}
+#ifdef DEBUG_TOUCH_CAL
+		printk(KERN_ERR "DEBUG> translate touch after cal adjust: x=%d y=%d\n", *px, *py);
 #endif
+	}
 
 }
 
@@ -524,17 +533,16 @@ static void ts_shutdown(struct ft5x06_ts *ts)
 /* Return 0 if detection is successful, -ENODEV otherwise */
 static int detect_ft5x06(struct i2c_client *client)
 {
-#if 1 // KLL_MOD
-if ( gNewDisplay )
-{
-  //printk(KERN_ERR "KLL_DEBUG> detect_ft5x06(): before i2c_addr=%02x\n", client->addr);
-  if (client->addr == 0x3a ) // old display touch controller ID
-  {
-    client->addr = 0x38; // new display touch controller ID
-  }
-  //printk(KERN_ERR "KLL_DEBUG> detect_ft5x06(): after i2c_addr=%02x\n", client->addr);
-}
-#endif
+	if ( gNewDisplay )
+	{
+		//printk(KERN_ERR "DEBUG> detect_ft5x06(): before i2c_addr=%02x\n", client->addr);
+		if (client->addr == 0x3a ) // old display touch controller ID
+		{
+			client->addr = 0x38; // new display touch controller ID
+		}
+		//printk(KERN_ERR "DEBUG> detect_ft5x06(): after i2c_addr=%02x\n", client->addr);
+	}
+
 	struct i2c_adapter *adapter = client->adapter;
 	char buffer;
 	struct i2c_msg pkt = {
@@ -554,9 +562,7 @@ if ( gNewDisplay )
 static int ts_detect(struct i2c_client *client,
 			  struct i2c_board_info *info)
 {
-#if 1 // KLL_MOD
-//printk(KERN_ERR "KLL_DEBUG> ts_detect(): i2c_addr=%02x\n", client->addr);
-#endif
+	//printk(KERN_ERR "DEBUG> ts_detect(): i2c_addr=%02x\n", client->addr);
 	int err = detect_ft5x06(client);
 	if (!err)
 		strlcpy(info->type, "ft5x06-ts", I2C_NAME_SIZE);
