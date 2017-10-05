@@ -36,6 +36,8 @@
 #define USE_ABS_MT
 #endif
 
+extern int gNewDisplay;
+
 static int calibration[7] = {
 	65536,0,0,
 	0,65536,0,
@@ -70,7 +72,11 @@ static void translate(int *px, int *py)
 		*px = x ;
 		*py = y ;
 	}
+
 #if 1 // KLL_MOD - invert x-axis for new display touch controller...
+//printk(KERN_ERR "KLL_DEBUG> translate touch coordinate: gNewDisplay= %d\n", gNewDisplay);
+if ( gNewDisplay )
+{
   int ts_max_x = 480 - 1; // touchscreen max X value
   int ts_max_y = 800 - 1; // touchscreen max Y value
   int lcd_max_y = 854 - 1; // LCD display max Y value
@@ -84,7 +90,9 @@ static void translate(int *px, int *py)
   *py = (*py * (lcd_max_y + 1)) / (ts_max_y + 1);
   if ( *py > lcd_max_y ) 
     *py = lcd_max_y;
+}
 #endif
+
 }
 
 struct point {
@@ -517,12 +525,15 @@ static void ts_shutdown(struct ft5x06_ts *ts)
 static int detect_ft5x06(struct i2c_client *client)
 {
 #if 1 // KLL_MOD
-printk(KERN_ERR "KLL_DEBUG> detect_ft5x06(): before i2c_addr=%02x\n", client->addr);
-if (client->addr == 0x3a )
+if ( gNewDisplay )
 {
-  client->addr = 0x38;
+  //printk(KERN_ERR "KLL_DEBUG> detect_ft5x06(): before i2c_addr=%02x\n", client->addr);
+  if (client->addr == 0x3a ) // old display touch controller ID
+  {
+    client->addr = 0x38; // new display touch controller ID
+  }
+  //printk(KERN_ERR "KLL_DEBUG> detect_ft5x06(): after i2c_addr=%02x\n", client->addr);
 }
-printk(KERN_ERR "KLL_DEBUG> detect_ft5x06(): after i2c_addr=%02x\n", client->addr);
 #endif
 	struct i2c_adapter *adapter = client->adapter;
 	char buffer;
@@ -544,7 +555,7 @@ static int ts_detect(struct i2c_client *client,
 			  struct i2c_board_info *info)
 {
 #if 1 // KLL_MOD
-printk(KERN_ERR "KLL_DEBUG> ts_detect(): i2c_addr=%02x\n", client->addr);
+//printk(KERN_ERR "KLL_DEBUG> ts_detect(): i2c_addr=%02x\n", client->addr);
 #endif
 	int err = detect_ft5x06(client);
 	if (!err)

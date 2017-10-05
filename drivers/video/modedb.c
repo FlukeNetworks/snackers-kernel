@@ -488,13 +488,15 @@ EXPORT_SYMBOL(vesa_modes);
  *
  */
 
+int gNewDisplay = 0;
+
 static int fb_try_mode(struct fb_var_screeninfo *var, struct fb_info *info,
 		       const struct fb_videomode *mode, unsigned int bpp)
 {
     int err = 0;
 
 #if 1 // KLL_MOD
-printk(KERN_ERR "KLL_DEBUG> fb_try_mode(): trying res %dx%d \n", mode->xres, mode->yres);
+printk(KERN_ERR "KLL_DEBUG> fb_try_mode(): display res= %dx%d \n", mode->xres, mode->yres);
 #endif
     DPRINTK("Trying mode %s %dx%d-%d@%d\n", mode->name ? mode->name : "noname",
 	    mode->xres, mode->yres, bpp, mode->refresh);
@@ -519,7 +521,7 @@ printk(KERN_ERR "KLL_DEBUG> fb_try_mode(): trying res %dx%d \n", mode->xres, mod
     	err = info->fbops->fb_check_var(var, info);
     var->activate &= ~FB_ACTIVATE_TEST;
 #if 1 // KLL_MOD
-printk(KERN_ERR "KLL_DEBUG> fb_try_mode(): return val= %d \n", err);
+//printk(KERN_ERR "KLL_DEBUG> fb_try_mode(): return val= %d \n", err);
 #endif
     return err;
 }
@@ -712,7 +714,7 @@ done:
 	best = -1;
 	for (i = 0; i < dbsize; i++) {
 #if 1 // KLL_MOD
-printk(KERN_ERR "KLL_DEBUG> fb_find_mode(): name lookup -- db[%d]= %s\n", i, db[i].name);
+//printk(KERN_ERR "KLL_DEBUG> fb_find_mode(): name lookup -- db[%d]= %s\n", i, db[i].name);
 #endif
 		if ((name_matches(db[i], name, namelen) ||
 		    (res_specified && res_matches(db[i], xres, yres))) &&
@@ -730,6 +732,7 @@ printk(KERN_ERR "KLL_DEBUG> fb_find_mode(): name lookup -- db[%d]= %s\n", i, db[
 #if 1 // KLL_MOD
 printk(KERN_ERR "KLL_DEBUG> fb_find_mode(): best name db index=%d\n", best);
 #endif
+	if (best == 0) gNewDisplay = 1;
 	if (best != -1) {
 		fb_try_mode(var, info, &db[best], bpp);
 #if 1 // KLL_MOD
