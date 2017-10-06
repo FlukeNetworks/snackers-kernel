@@ -80,8 +80,12 @@ static void translate(int *px, int *py)
 	// apply touchscreen calibration factors
 	int x, y, x1, y1;
 #ifdef DEBUG_TOUCH_CAL
-	printk(KERN_ERR "DEBUG> translate touch calibration[6]= %d\n", calibration[6]);
-	printk(KERN_ERR "DEBUG> translate touch before x-invert: x=%d y=%d\n", *px, *py);
+	int k;
+	for ( k = 0; k < 7; k++ )
+	{
+		printk(KERN_ERR "DEBUG> translate touch calibration[%d]= %d\n", k, calibration[k]);
+	}
+	printk(KERN_ERR "DEBUG> translate touch before cal adjust: x=%d y=%d\n", *px, *py);
 #endif
 	if (calibration[6]) {
 		x1 = *px;
