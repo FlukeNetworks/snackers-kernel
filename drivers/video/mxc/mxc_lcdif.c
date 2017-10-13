@@ -128,17 +128,10 @@ static int lcdif_init(struct mxc_dispdrv_handle *disp,
 	struct fb_videomode *modedb = lcdif_modedb;
 	int modedb_sz = lcdif_modedb_sz;
 
-#if 1 // KLL_MOD
-//printk(KERN_ERR "KLL_DEBUG> linux lcd_ifinit(): modedb_sz= %d\n", modedb_sz);
-#endif
-
 	/* use platform defined ipu/di */
 	setting->dev_id = plat_data->ipu_id;
 	setting->disp_id = plat_data->disp_id;
 
-#if 1 // KLL_MOD
-//printk(KERN_ERR "KLL_DEBUG> calling fb_find_mode() with arg3= %s\n", setting->dft_mode_str);
-#endif
 	ret = fb_find_mode(&setting->fbi->var, setting->fbi, setting->dft_mode_str,
 				modedb, modedb_sz, NULL, setting->default_bpp);
 	if (!ret) {
