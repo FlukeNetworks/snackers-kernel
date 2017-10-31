@@ -553,11 +553,7 @@ static struct mtd_partition spi_nor_partitions[] = {
 	{
 	 .name = "ubparams",
 	 .offset = MTDPART_OFS_APPEND,
-#ifdef SNACKERS_BOARD
 	 .size = 64*1024,
-#else
-	 .size = 8*1024,
-#endif
 	},
 	{
 	 .name = "unused",
@@ -566,15 +562,18 @@ static struct mtd_partition spi_nor_partitions[] = {
 	},
 };
 
-static struct flash_platform_data spi_flash_data = {
+static struct flash_platform_data spi_flash_data_m25p16 = {
 	.name = "m25p80",
 	.parts = spi_nor_partitions,
 	.nr_parts = ARRAY_SIZE(spi_nor_partitions),
-#ifdef SNACKERS_BOARD
 	.type = "m25p16",
-#else
-	.type = "sst25vf016b",
-#endif
+};
+
+static struct flash_platform_data spi_flash_data_mt25q = {
+	.name = "mt25q",
+	.parts = spi_nor_partitions,
+	.nr_parts = ARRAY_SIZE(spi_nor_partitions),
+	.type = "mt25q",
 };
 #endif
 
@@ -583,13 +582,16 @@ static struct spi_board_info spi_nor_device[] __initdata = {
 	{
 		.modalias = "m25p80",
 		.max_speed_hz = 20000000, /* max spi clock (SCK) speed in HZ */
-#ifdef SNACKERS_BOARD
 		.bus_num = 3,
-#else
-		.bus_num = 0,
-#endif
 		.chip_select = 0,
-		.platform_data = &spi_flash_data,
+		.platform_data = &spi_flash_data_m25p16,
+	},
+	{
+		.modalias = "mt25q",
+		.max_speed_hz = 20000000, /* max spi clock (SCK) speed in HZ */
+		.bus_num = 3,
+		.chip_select = 0,
+		.platform_data = &spi_flash_data_mt25q,
 	},
 #endif
 };

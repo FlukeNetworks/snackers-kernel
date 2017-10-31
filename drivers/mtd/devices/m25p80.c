@@ -730,6 +730,9 @@ static const struct spi_device_id m25p_ids[] = {
 	{ "m25p64",  INFO(0x202017,  0,  64 * 1024, 128, 0) },
 	{ "m25p128", INFO(0x202018,  0, 256 * 1024,  64, 0) },
 
+    // new SPI-NOR flash (U901) for Snackers
+	{ "mt25q128",  INFO(0x20BA18,  0,  64 * 1024, 256, 0) },
+
 	{ "m25p05-nonjedec",  INFO(0, 0,  32 * 1024,   2, 0) },
 	{ "m25p10-nonjedec",  INFO(0, 0,  32 * 1024,   4, 0) },
 	{ "m25p20-nonjedec",  INFO(0, 0,  64 * 1024,   4, 0) },
