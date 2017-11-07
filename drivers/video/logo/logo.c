@@ -12,6 +12,7 @@
 #include <linux/linux_logo.h>
 #include <linux/stddef.h>
 #include <linux/module.h>
+#include <linux/init.h>
 
 #ifdef CONFIG_M68K
 #include <asm/setup.h>
@@ -66,6 +67,15 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 #ifdef CONFIG_LOGO_LINUX_CLUT224
 		/* Generic Linux logo */
 		logo = &logo_linux_clut224;
+
+        // inspect command line for screen model (passed from u-boot)
+        const char* ptr = strstr(saved_command_line, "NVD_HSD050");
+        if (ptr != NULL) {
+            printk(KERN_INFO "initializing splash for NVD display\n");
+            logo = &logo_linux_NVO_clut224;
+        } else {
+            printk(KERN_INFO "initializing splash for AUO display\n");
+        }
 #endif
 #ifdef CONFIG_LOGO_BLACKFIN_CLUT224
 		/* Blackfin Linux logo */
